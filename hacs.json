@@ -1,0 +1,10 @@
+{
+    "name": "AL-KO",
+    "domains": [
+        "sensor",
+        "switch",
+        "select"
+    ],
+    "render_readme": true,
+    "homeassistant": "2021.7.0"
+}
