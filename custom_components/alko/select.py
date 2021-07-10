@@ -1,4 +1,5 @@
 """Support for AL-KO switch platform."""
+import datetime
 import logging
 
 from pyalko.objects.device import AlkoDevice
@@ -37,7 +38,7 @@ async def async_setup_entry(
 
 
 class AlkoSelect(AlkoDeviceEntity, SelectEntity):
-    """Defines an AL-KO select."""
+    """Defines a AL-KO control mode select."""
 
     _attr_icon = "mdi:playlist-play"
 
@@ -46,7 +47,7 @@ class AlkoSelect(AlkoDeviceEntity, SelectEntity):
         coordinator: DataUpdateCoordinator,
         device: AlkoDevice
     ) -> None:
-        """Initialize AL-KO select."""
+        """Initialize the AL-KO control mode select."""
 
         super().__init__(
             coordinator,
@@ -55,7 +56,7 @@ class AlkoSelect(AlkoDeviceEntity, SelectEntity):
             "Control Mode",
         )
 
-        self._attr_options = ['WORKING', 'HOMING']
+        self._attr_options = ["WORKING", "IDLE", "HOMING"]
 
     @property
     def current_option(self) -> str:
@@ -64,10 +65,11 @@ class AlkoSelect(AlkoDeviceEntity, SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         """Change select option."""
-        try:
-            await self._update_device(
-                self.device, f"operationState={option}"
-            )
-        except AlkoException as exception:
-            _LOGGER.error(exception)
-        await self.coordinator.async_refresh()
+        if option is not self.device.thingState.state.reported.operationState:
+            rtc = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+            try:
+                await self._update_device(self.device, operationState=option, rtc=rtc)
+            except AlkoException as exception:
+                _LOGGER.error(exception)
+            await self.coordinator.async_refresh()

@@ -23,7 +23,7 @@ The AL-KO API is unfortunately not open for 3rd party applications. In order for
 As stated above, this is currently only for advanced users. I won't go into any more details about the approach, but tools and guides are readily available online.
 
 ### Installation
-Download or clone and copy the folder `custom_components/alko` into your `custom_components/`\
+If you're using HACS you can add this repo as a custom repository and install, otherwise download or clone and copy the folder `custom_components/alko` into your `custom_components/`\
 Add the following to your configuration.yaml.
 
 ```yaml

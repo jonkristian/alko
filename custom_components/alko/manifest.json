@@ -4,9 +4,9 @@
   "config_flow": true,
   "documentation": "https://github.com/jonkristian/alko",
   "requirements": [
-    "pyalko==0.1.0"
+    "pyalko==0.2.0"
   ],
-  "version": "0.1.0",
+  "version": "0.2.0",
   "dependencies": [
     "http"
   ],
