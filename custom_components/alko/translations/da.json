@@ -1,0 +1,25 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Kontoen er sat op",
+            "already_in_progress": "Konfigurationen er igang",
+            "authorize_url_timeout": "Timeout i at oprette login URL.",
+            "missing_configuration": "Komponenten er ikke konfigureret. Venligst følg dokumentationen.",
+            "no_url_available": "Ingen URL tilgængelig. For mere information omkring denne fejl, [kig i hjælp sektionen]({docs_url})",
+            "oauth_error": "Modtog ukorrekt token data."
+        },
+        "create_entry": {
+            "default": "Login success"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "access_token": "Access Token",
+                    "refresh_token": "Refresh Token"
+                },
+                "title": "Do skal anskaffe AL-KO Access og Refresh tokens"
+            }
+        }
+    },
+    "title": "AL-KO"
+}
