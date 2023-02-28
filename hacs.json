@@ -6,5 +6,5 @@
         "select"
     ],
     "render_readme": true,
-    "homeassistant": "2021.7.0"
+    "homeassistant": "2023.2"
 }
