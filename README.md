@@ -19,6 +19,14 @@ For advanced users only, please see further explaination below.
 
 ## Manual or via HACS
 If you're using HACS you can add this repo as a custom repository and install, otherwise download or clone and copy the folder `custom_components/alko` into your `custom_components/`. Be sure to restart.
+
+## Installing a working app
+As stated in [issue #2](https://github.com/jonkristian/alko/issues/2), it is not possible to extract the credentials from recent AL-KO InTouch app (probably since version 4.0.0). In order to extract the credentials from the app, you need to download an older app version.
+
+- Download and install older InTouch app from the any APK mirrors website. If you have the "official" InTouch app from Google Play installed, remember to unsinstall it first. Tested and confirmed on v3.4.2 version downloaded from APKPure. Unfortunately, only .xapk file is available there, so you need to download APKPure app itself and then install InTouch v3.4.2 using the APKPure app.
+- Log in to the app and enter "My devices" tab (to make sure that the app downloaded devices information).
+- Proceed with further instructions below regarding token extraction using adb and intouch-credentials.sh script.
+
 ## Finding secret and tokens (Android only | Requires adb)
 The AL-KO API is unfortunately not open for 3rd party applications. In order for this component to work you will have to have set up the AL-KO inTOUCH app and a [working adb connection to your phone](https://developer.android.com/studio/command-line/adb). To extract your secret and tokens I've created a very simple and crude script that will output these in the terminal.
 - Download [intouch-credentials.sh](https://raw.githubusercontent.com/jonkristian/alko/master/tools/intouch-credentials.sh) (located in tools folder).
