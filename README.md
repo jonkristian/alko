@@ -46,7 +46,7 @@ After a restart you should now be able to add the integration via the integratio
 If you own a smart product from AL-KO and would like to contribute, please don't hesitate getting in touch.
 
 ### Regarding the AL-KO Api
-It's really sad that many manufacturers don't allow for 3rd party apps, since these APIs are already there and available through their own app most of the time, I personally don't see what the harm is. I've already sent an e-mail to AL-KO requesting that they open up to allow for more advanced home automation platforms like Home Assistant, but weeks have gone and I don't really expect getting a reply back. Maybe they will listen if more people get involved so if you want to try and do something about this, the e-mail I've found is mediamanager@al-ko.de.
+It's really sad that many manufacturers don't allow for 3rd party apps, since these APIs are already there and available through their own app most of the time, I personally don't see what the harm is. I've already sent an e-mail to AL-KO requesting that they open up to allow for more advanced home automation platforms like Home Assistant, but weeks have gone and I don't really expect getting a reply back. Maybe they will listen if more people get involved so if you want to try and do something about this, the e-mail I've found is gardentech@al-ko.com.
 ***
 ⭐️ this repository if you found it useful ❤️
 
