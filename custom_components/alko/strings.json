@@ -3,10 +3,12 @@
   "config": {
     "step": {
       "user": {
-        "title": "Fill in your AL-KO access_token and refresh_token",
+        "title": "Fill in your AL-KO username and password.",
         "data": {
-          "access_token": "",
-          "refresh_token": ""
+          "username": "",
+          "password": "",
+          "client_id": "",
+          "client_secret": ""
         }
       },
       "reauth_confirm": {

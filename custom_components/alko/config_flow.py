@@ -26,12 +26,16 @@ class OAuth2FlowHandler(
 
     def __init__(self):
         self.data_schema = {
-            vol.Required("access_token"): str,
-            vol.Required("refresh_token"): str,
+            vol.Required("client_id"): str,
+            vol.Required("client_secret"): str,
+            vol.Required("username"): str,
+            vol.Required("password"): str,
         }
 
-        self._access_token = None
-        self._refresh_token = None
+        self._client_id = None
+        self._client_secret = None
+        self._username = None
+        self._password = None
 
     async def async_step_user(self, user_input=None):
         """Handle a flow initialized by the user."""
@@ -43,10 +47,24 @@ class OAuth2FlowHandler(
                 step_id="user", data_schema=vol.Schema(self.data_schema)
             )
 
-        self._access_token = user_input["access_token"]
-        self._refresh_token = user_input["refresh_token"]
+        self._client_id = user_input["client_id"]
+        self._client_secret = user_input["client_secret"]
+        self._username = user_input["username"]
+        self._password = user_input["password"]
 
-        return await self.async_oauth_create_entry(self)
+        implementations = await config_entry_oauth2_flow.async_get_implementations(
+            self.hass, self.DOMAIN
+        )
+        _LOGGER.debug("Implementations found: %s", implementations)
+
+        if implementations:
+            implementation_id = list(implementations.keys())[0]
+            self._auth_implementation = implementation_id
+            return await self.async_oauth_create_entry(self)
+        else:
+            _LOGGER.error(
+                "No implementations found for domain %s", self.DOMAIN)
+            return self.async_abort(reason="no_implementations")
 
     async def async_step_reauth(self, user_input=None):
         """Perform reauth upon an API authentication error."""
@@ -63,25 +81,44 @@ class OAuth2FlowHandler(
 
     async def async_oauth_create_entry(self, data: dict) -> dict:
         """Create an oauth config entry or update existing entry for reauth."""
-
-        now = dt_util.utcnow() + timedelta(seconds=30)
-        expires_at = dt_util.as_timestamp(now)
-
-        config_data = {
-            "auth_implementation": DOMAIN,
-            "token": {
-                "access_token": self._access_token,
-                "refresh_token": self._refresh_token,
-                "expires_in": 1800,
-                "token_type": "Bearer",
-                "scope": "openid profile alkoCustomerId introspection offline_access",
-                "expires_at": expires_at
-            }
+        token_data = {
+            "client_id": self._client_id,
+            "client_secret": self._client_secret,
+            "grant_type": "password",
+            "username": self._username,
+            "password": self._password,
+            "scope": "alkoCustomerId alkoCulture offline_access introspection",
         }
 
-        existing_entry = await self.async_set_unique_id(DOMAIN)
-        if existing_entry:
-            self.hass.config_entries.async_update_entry(existing_entry, data=data)
-            await self.hass.config_entries.async_reload(existing_entry.entry_id)
-            return self.async_abort(reason="reauth_successful")
-        return self.async_create_entry(title="Alko", data=config_data)
+        try:
+            token_response = await self.hass.helpers.aiohttp_client.async_get_clientsession().post(
+                "https://idp.al-ko.com/connect/token", data=token_data
+            )
+            token_response.raise_for_status()
+            token_info = await token_response.json()
+
+            now = dt_util.utcnow() + timedelta(seconds=30)
+            expires_at = dt_util.as_timestamp(now)
+
+            config_data = {
+                "auth_implementation": self._auth_implementation,
+                "token": {
+                    "access_token": token_info["access_token"],
+                    "refresh_token": token_info["refresh_token"],
+                    "expires_in": token_info["expires_in"],
+                    "token_type": token_info["token_type"],
+                    "scope": token_info["scope"],
+                    "expires_at": expires_at
+                }
+            }
+
+            existing_entry = await self.async_set_unique_id(DOMAIN)
+            if existing_entry:
+                self.hass.config_entries.async_update_entry(
+                    existing_entry, data=config_data)
+                await self.hass.config_entries.async_reload(existing_entry.entry_id)
+                return self.async_abort(reason="reauth_successful")
+            return self.async_create_entry(title="Alko", data=config_data)
+        except Exception as e:
+            _LOGGER.error(f"Error obtaining tokens: {e}")
+            return self.async_abort(reason="token_request_failed")

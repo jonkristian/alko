@@ -2,6 +2,7 @@
 import datetime
 import logging
 
+from pyalko import Alko
 from pyalko.objects.device import AlkoDevice
 from pyalko.exceptions import AlkoException
 
@@ -23,7 +24,7 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities
 ) -> None:
     """Set up the AL-KO select platform based on a config entry."""
-    coordinator: DataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: DataUpdateCoordinator[Alko] = hass.data[DOMAIN][entry.entry_id]
 
     entities = []
 

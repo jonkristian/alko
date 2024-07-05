@@ -1,4 +1,5 @@
 """The AL-KO integration."""
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -11,18 +12,11 @@ from pyalko.objects.device import AlkoDevice
 import async_timeout
 import voluptuous as vol
 
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
-from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
-from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
+from homeassistant.const import Platform
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_CLIENT_ID, CONF_CLIENT_SECRET
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
-from homeassistant.helpers import (
-    aiohttp_client,
-    config_entry_oauth2_flow,
-    config_validation as cv,
-)
+from homeassistant.helpers import aiohttp_client, config_entry_oauth2_flow
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
@@ -30,65 +24,35 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 
-from .api import ConfigEntryAlkoClient, AlkoLocalOAuth2Implementation
-from .config_flow import OAuth2FlowHandler
-from .const import DOMAIN, OAUTH2_AUTHORIZE, OAUTH2_TOKEN
-
-CONFIG_SCHEMA = vol.Schema(
-    {
-        DOMAIN: vol.Schema(
-            {
-                vol.Required(CONF_CLIENT_ID): cv.string,
-                vol.Required(CONF_CLIENT_SECRET): cv.string,
-            }
-        )
-    },
-    extra=vol.ALLOW_EXTRA,
+from .api import (
+    ConfigEntryAlkoClient,
+    AlkoLocalOAuth2Implementation,
+    OAuth2SessionAlko
 )
+
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = (SENSOR_DOMAIN, SELECT_DOMAIN, SWITCH_DOMAIN)
-
-
-async def async_setup(hass: HomeAssistant, config: dict):
-    """Set up the AL-KO component."""
-    hass.data[DOMAIN] = {}
-
-    if DOMAIN not in config:
-        return True
-
-    hass.data[DOMAIN][CONF_CLIENT_ID] = config[DOMAIN][CONF_CLIENT_ID]
-
-    OAuth2FlowHandler.async_register_implementation(
-        hass,
-        AlkoLocalOAuth2Implementation(
-            hass,
-            DOMAIN,
-            config[DOMAIN][CONF_CLIENT_ID],
-            config[DOMAIN][CONF_CLIENT_SECRET],
-            OAUTH2_AUTHORIZE,
-            OAUTH2_TOKEN,
-        ),
-    )
-
-    return True
+PLATFORMS = [Platform.SENSOR, Platform.SWITCH, Platform.SELECT]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up AL-KO from a config entry."""
+    """Set up ALKO from a config entry."""
     implementation = (
         await config_entry_oauth2_flow.async_get_config_entry_implementation(
             hass, entry
         )
     )
+    if not isinstance(implementation, AlkoLocalOAuth2Implementation):
+        raise TypeError(
+            "Unexpected auth implementation; can't find oauth client id")
 
     session = aiohttp_client.async_get_clientsession(hass)
-    oauth_session = config_entry_oauth2_flow.OAuth2Session(hass, entry, implementation)
+    oauth_session = OAuth2SessionAlko(hass, entry, implementation)
 
     client = ConfigEntryAlkoClient(session, oauth_session)
-
-    client_id = hass.data[DOMAIN][CONF_CLIENT_ID]
+    client_id = implementation.client_id
     alko = Alko(client, client_id)
 
     async def async_update_data() -> Alko:
@@ -96,6 +60,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         try:
             async with async_timeout.timeout(60):
                 await alko.get_devices()
+                _LOGGER.debug("Fetched devices: %s", repr(alko.devices))
             return alko
         except AlkoAuthenticationException as exception:
             raise ConfigEntryAuthFailed from exception
@@ -112,12 +77,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         update_interval=timedelta(seconds=120),
     )
 
-    hass.data[DOMAIN][entry.entry_id] = coordinator
-
     # Fetch initial data so we have data when entities subscribe
     await coordinator.async_config_entry_first_refresh()
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
-    hass.config_entries.async_setup_platforms(entry, PLATFORMS)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
 
@@ -131,12 +95,12 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unload_ok
 
 
-class AlkoEntity(CoordinatorEntity):
+class AlkoEntity(CoordinatorEntity[DataUpdateCoordinator[Alko]]):
     """Defines a base AL-KO entity."""
 
     def __init__(
         self,
-        coordinator: DataUpdateCoordinator,
+        coordinator: DataUpdateCoordinator[Alko],
         device: AlkoDevice,
         key: str,
         name: str,
@@ -178,6 +142,5 @@ class AlkoDeviceEntity(AlkoEntity):
             "manufacturer": "AL-KO",
             "model": self._device_model,
             "name": self._device_name,
-            "device_type": self._device_type,
             "sw_version": self._firmware_main,
         }

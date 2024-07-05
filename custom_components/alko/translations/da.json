@@ -14,10 +14,12 @@
         "step": {
             "user": {
                 "data": {
-                    "access_token": "Access Token",
-                    "refresh_token": "Refresh Token"
+                    "client_id": "Client ID",
+                    "client_secret": "Client Secret",
+                    "username": "Username",
+                    "password": "Password"
                 },
-                "title": "Do skal anskaffe AL-KO Access og Refresh tokens"
+                "title": "Koble til AL-KO"
             }
         }
     },

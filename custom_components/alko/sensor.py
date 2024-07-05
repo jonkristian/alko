@@ -2,16 +2,16 @@
 import logging
 from datetime import datetime, timedelta
 
+from pyalko import Alko
 from pyalko.objects.device import AlkoDevice, Thingstate
 
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    DEVICE_CLASS_TIMESTAMP,
-    DEVICE_CLASS_BATTERY,
-    PERCENTAGE
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
@@ -24,10 +24,10 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up the AL-KO sensor platform based on a config entry."""
-    coordinator: DataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: DataUpdateCoordinator[Alko] = hass.data[DOMAIN][entry.entry_id]
 
     entities = []
 
@@ -193,7 +193,7 @@ class AlkoBatterySensor(AlkoSensor):
             device,
             f"{device.thingName}_battery_level",
             "Battery Level",
-            DEVICE_CLASS_BATTERY,
+            SensorDeviceClass.TEMPERATURE,
             "%",
         )
 
