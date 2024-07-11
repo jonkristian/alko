@@ -1,0 +1,27 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Account wurde bereits konfiguriert",
+            "already_in_progress": "Konfigurations-Ablauf wurde bereits gestartet",
+            "authorize_url_timeout": "Timeout bei der Generierung der Authorisierungs-URL.",
+            "missing_configuration": "Die Komponente ist nicht konfiguriert. Bitte folge der Dokumentation.",
+            "no_url_available": "Keine URL verfügbar. Für Informationen über diesen Fehler, [check the help section]({docs_url})",
+            "oauth_error": "Fehlerhafte Token Daten erhalten."
+        },
+        "create_entry": {
+            "default": "Erfolgreich authentifiziert"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "client_id": "Client ID (von AL-KO bereitgestellt)",
+                    "client_secret": "Client Secret (von AL-KO bereitgestellt)",
+                    "username": "User Name (inTOUCH Login)",
+                    "password": "Passwort (inTOUCH Login)"
+                },
+                "title": "Verbinde AL-KO"
+            }
+        }
+    },
+    "title": "AL-KO"
+}
