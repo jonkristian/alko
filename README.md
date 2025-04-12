@@ -23,7 +23,13 @@ Before installing you should know that you will have to to request access to the
 If you're using HACS you can add this repo as a custom repository and install, otherwise download or clone and copy the folder `custom_components/alko` into your `custom_components/`. Be sure to restart.
 
 ## Setup
-Before you add the integration, you'll need to manually add your [application credentials](https://www.home-assistant.io/integrations/application_credentials/).
+1. Go to Settings > Devices & Services
+2. Click the "+ ADD INTEGRATION" button
+3. Search for "AL-KO" and select it
+4. If you haven't added application credentials yet, you'll be prompted to add them first
+   - Enter the client ID and client secret you received from AL-KO
+5. Once the application credentials are set, enter your AL-KO username and password
+6. The integration will now set up your devices automatically
 
 ## Contribute
 If you own a smart product from AL-KO and would like to contribute, please don't hesitate getting in touch.

@@ -17,5 +17,6 @@ pyalko
 
 
 # Home Assistant configuration
+blueprints/*
 config/*
 !config/configuration.yaml

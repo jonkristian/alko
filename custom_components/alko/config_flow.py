@@ -6,6 +6,7 @@ import voluptuous as vol
 
 from homeassistant.helpers import config_entry_oauth2_flow
 from homeassistant.util import dt as dt_util
+from homeassistant.helpers import aiohttp_client
 
 from .const import DOMAIN
 
@@ -19,52 +20,50 @@ class OAuth2FlowHandler(
 
     DOMAIN = DOMAIN
 
-    @property
-    def logger(self) -> logging.Logger:
-        """Return logger."""
-        return logging.getLogger(__name__)
-
     def __init__(self):
+        """Initialize the config flow."""
+        super().__init__()
         self.data_schema = {
-            vol.Required("client_id"): str,
-            vol.Required("client_secret"): str,
             vol.Required("username"): str,
             vol.Required("password"): str,
         }
 
-        self._client_id = None
-        self._client_secret = None
         self._username = None
         self._password = None
+
+    @property
+    def logger(self) -> logging.Logger:
+        """Return logger."""
+        return logging.getLogger(__name__)
 
     async def async_step_user(self, user_input=None):
         """Handle a flow initialized by the user."""
         if self._async_current_entries():
             return self.async_abort(reason="single_instance_allowed")
 
+        # Check if we have application credentials
+        implementations = await config_entry_oauth2_flow.async_get_implementations(
+            self.hass, self.DOMAIN
+        )
+        if not implementations:
+            return self.async_abort(
+                reason="missing_credentials",
+                description_placeholders={
+                    "url": "https://www.home-assistant.io/integrations/alko/#application-credentials"
+                }
+            )
+
         if user_input is None:
             return self.async_show_form(
                 step_id="user", data_schema=vol.Schema(self.data_schema)
             )
 
-        self._client_id = user_input["client_id"]
-        self._client_secret = user_input["client_secret"]
         self._username = user_input["username"]
         self._password = user_input["password"]
 
-        implementations = await config_entry_oauth2_flow.async_get_implementations(
-            self.hass, self.DOMAIN
-        )
-        _LOGGER.debug("Implementations found: %s", implementations)
-
-        if implementations:
-            implementation_id = list(implementations.keys())[0]
-            self._auth_implementation = implementation_id
-            return await self.async_oauth_create_entry(self)
-        else:
-            _LOGGER.error(
-                "No implementations found for domain %s", self.DOMAIN)
-            return self.async_abort(reason="no_implementations")
+        implementation_id = list(implementations.keys())[0]
+        self._auth_implementation = implementation_id
+        return await self.async_oauth_create_entry(self)
 
     async def async_step_reauth(self, user_input=None):
         """Perform reauth upon an API authentication error."""
@@ -81,17 +80,22 @@ class OAuth2FlowHandler(
 
     async def async_oauth_create_entry(self, data: dict) -> dict:
         """Create an oauth config entry or update existing entry for reauth."""
-        token_data = {
-            "client_id": self._client_id,
-            "client_secret": self._client_secret,
-            "grant_type": "password",
-            "username": self._username,
-            "password": self._password,
-            "scope": "alkoCustomerId alkoCulture offline_access introspection",
-        }
-
         try:
-            token_response = await self.hass.helpers.aiohttp_client.async_get_clientsession().post(
+            implementations = await config_entry_oauth2_flow.async_get_implementations(
+                self.hass, self.DOMAIN
+            )
+            implementation = implementations[self._auth_implementation]
+
+            token_data = {
+                "client_id": implementation.client_id,
+                "client_secret": implementation.client_secret,
+                "grant_type": "password",
+                "username": self._username,
+                "password": self._password,
+                "scope": "alkoCustomerId alkoCulture offline_access introspection"
+            }
+
+            token_response = await aiohttp_client.async_get_clientsession(self.hass).post(
                 "https://idp.al-ko.com/connect/token", data=token_data
             )
             token_response.raise_for_status()
@@ -109,7 +113,9 @@ class OAuth2FlowHandler(
                     "token_type": token_info["token_type"],
                     "scope": token_info["scope"],
                     "expires_at": expires_at
-                }
+                },
+                "username": self._username,
+                "password": self._password
             }
 
             existing_entry = await self.async_set_unique_id(DOMAIN)
