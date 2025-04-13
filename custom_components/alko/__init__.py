@@ -34,7 +34,13 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.SENSOR, Platform.SWITCH, Platform.SELECT]
+PLATFORMS = [
+    Platform.BINARY_SENSOR,
+    Platform.SENSOR,
+    Platform.SWITCH,
+    Platform.SELECT,
+    Platform.NUMBER,
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -113,6 +119,8 @@ class AlkoEntity(CoordinatorEntity[DataUpdateCoordinator[Alko]]):
         self._device_type = device.thingAttributes.thingType
         self._device_model = device.thingAttributes.thingModel
         self._firmware_main = device.thingAttributes.firmwareMain
+        self._hardware_main = device.thingAttributes.hardwareVersionMain
+        self._serial_number = device.thingAttributes.serialNumber
         self._update_device = coordinator.data.update_device
 
     @property
@@ -143,4 +151,6 @@ class AlkoDeviceEntity(AlkoEntity):
             "model": self._device_model,
             "name": self._device_name,
             "sw_version": self._firmware_main,
+            "hw_version": self._hardware_main,
+            "serial_number": self._serial_number,
         }

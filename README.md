@@ -2,17 +2,33 @@
 This component allows you to integrate your AL-KO Robolinho mower in Home Assistant.
 
 ## Supports
-- Battery level sensor
-- Operation states
-- Operation errors
-- Remaining blade life
-- Toggle **Eco Mode** and **Rain Sensor**
-- Start and Stop mowing
+- **Control**
+  - Start and Stop mowing
+  - Return to charging station
+  - Toggle Eco Mode
+  - Toggle Rain Sensor
+  - Toggle Frost Sensor
 
-## Planned
-- Translate operation state strings to something more readable.
-- Add reasonable string translations for error codes.
-- Translation
+- **Sensors**
+  - Battery level
+  - Operation state (IDLE, WORKING, HOMING)
+  - Operation errors (with detailed error codes)
+  - Remaining blade life
+  - Rain detection status
+  - Frost detection status
+  - Mowing permission status (rain/frost conditions)
+
+- **Settings**
+  - Rain sensitivity (1-10)
+  - Rain delay
+  - Frost threshold temperature
+  - Frost delay
+
+- **Device Information**
+  - Firmware version
+  - Hardware version
+  - Serial number
+  - Model information
 
 # Installation
 

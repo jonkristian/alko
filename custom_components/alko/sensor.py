@@ -8,6 +8,7 @@ from pyalko.objects.device import AlkoDevice, Thingstate
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -16,12 +17,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
 from . import AlkoDeviceEntity
-from .const import (
-    DOMAIN,
-)
-
-_LOGGER = logging.getLogger(__name__)
-
+from .const import DOMAIN
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
@@ -115,6 +111,8 @@ class AlkoOperationSensor(AlkoSensor):
 class AlkoErrorSensor(AlkoSensor):
     """Defines an AL-KO Error sensor."""
 
+    _attr_translation_key = "error"
+
     def __init__(
         self,
         coordinator: DataUpdateCoordinator,
@@ -138,12 +136,11 @@ class AlkoErrorSensor(AlkoSensor):
 
         if self.device.thingState.state.reported.operationError.code is not None:
             self._attr_extra_state_attributes["type"] = self.device.thingState.state.reported.operationError.type
-            self._attr_extra_state_attributes["description"] = self.device.thingState.state.reported.operationError.description
 
     @property
     def state(self) -> str:
         """Return the state of the sensor."""
-        return self.device.thingState.state.reported.operationError.code
+        return str(self.device.thingState.state.reported.operationError.code)
 
 
 class AlkoBladeSensor(AlkoSensor):

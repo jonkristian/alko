@@ -30,13 +30,23 @@ async def async_setup_entry(
     entities = []
 
     for device in coordinator.data.devices:
-        entities.append(
-            AlkoEcoModeSwitch(coordinator, device)
-        )
+        # Check if device supports eco mode
+        if device.thingState.state.reported.ecoMode is not None:
+            entities.append(
+                AlkoEcoModeSwitch(coordinator, device)
+            )
 
-        entities.append(
-            AlkoRainSensorSwitch(coordinator, device)
-        )
+        # Check if device supports rain sensor
+        if device.thingState.state.reported.rainSensor is not None:
+            entities.append(
+                AlkoRainSensorSwitch(coordinator, device)
+            )
+
+        # Check if device supports frost sensor
+        if device.thingState.state.reported.frostSensor is not None:
+            entities.append(
+                AlkoFrostSensorSwitch(coordinator, device)
+            )
 
     async_add_entities(entities, True)
 
@@ -123,6 +133,50 @@ class AlkoRainSensorSwitch(AlkoDeviceEntity, SwitchEntity):
         """Turn on rain sensor switch."""
         try:
             await self._update_device(self.device, rainSensor=True)
+        except AlkoException as exception:
+            _LOGGER.error(exception)
+        self._state = True
+        await self.coordinator.async_refresh()
+
+
+class AlkoFrostSensorSwitch(AlkoDeviceEntity, SwitchEntity):
+    """Defines an AL-KO frost sensor switch."""
+
+    _attr_icon = "mdi:snowflake"
+
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator,
+        device: AlkoDevice
+    ) -> None:
+        """Initialize AL-KO frost sensor switch."""
+        super().__init__(
+            coordinator,
+            device,
+            f"{device.thingName}_frost_sensor",
+            "Frost Sensor",
+        )
+
+        self._state = self.device.thingState.state.reported.frostSensor
+
+    @property
+    def is_on(self) -> bool:
+        """Return the state of the switch."""
+        return self._state
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn off frost sensor switch."""
+        try:
+            await self._update_device(self.device, frostSensor=False)
+        except AlkoException as exception:
+            _LOGGER.error(exception)
+        self._state = False
+        await self.coordinator.async_refresh()
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn on frost sensor switch."""
+        try:
+            await self._update_device(self.device, frostSensor=True)
         except AlkoException as exception:
             _LOGGER.error(exception)
         self._state = True
