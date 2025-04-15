@@ -6,7 +6,7 @@
             "authorize_url_timeout": "Vypršel čas při vytváření ověřovací URL.",
             "missing_configuration": "Některá část není správně nastavena. Postupujte prosím dle dokumentace.",
             "no_url_available": "URL není dostupná. Pro více informací o této chybě [nahlédněte do sekce nápovědy]({docs_url})",
-            "oauth_error": "Received invalid token data."
+            "oauth_error": "Neplatné ověření tokenu."
         },
         "create_entry": {
             "default": "Úspěšně ověřeno"
