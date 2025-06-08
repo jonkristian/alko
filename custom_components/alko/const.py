@@ -14,9 +14,3 @@ ALKO_SCOPES = "alkoCulture alkoCustomerId introspection offline_access"
 
 OAUTH2_AUTHORIZE = "https://idp.al-ko.com/connect/token"
 OAUTH2_TOKEN = "https://idp.al-ko.com/connect/token"
-
-OPERATIONS = {
-    'Start': 'WORKING',
-    'Stop': 'IDLE',
-    'Home': 'HOMING',
-}

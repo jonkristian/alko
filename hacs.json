@@ -1,10 +1,11 @@
 {
-    "name": "AL-KO",
-    "domains": [
-        "sensor",
-        "switch",
-        "select"
-    ],
-    "render_readme": true,
-    "homeassistant": "2025.1.4"
+  "name": "AL-KO",
+  "domains": [
+    "sensor",
+    "switch",
+    "button",
+    "lawn_mower"
+  ],
+  "render_readme": true,
+  "homeassistant": "2025.5.3"
 }

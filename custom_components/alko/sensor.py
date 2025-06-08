@@ -19,6 +19,7 @@ from homeassistant.util import dt as dt_util
 from . import AlkoDeviceEntity
 from .const import DOMAIN
 
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
@@ -163,7 +164,8 @@ class AlkoBladeSensor(AlkoSensor):
             device,
             f"{device.thingName}_blade_remaining",
             "Remaining Blade Life",
-            unit_of_measurement,
+            None,
+            "h",
         )
 
         self._attr_extra_state_attributes["operation_time"] = self.device.thingState.state.reported.operationTimeBlade
@@ -190,7 +192,7 @@ class AlkoBatterySensor(AlkoSensor):
             device,
             f"{device.thingName}_battery_level",
             "Battery Level",
-            SensorDeviceClass.TEMPERATURE,
+            SensorDeviceClass.BATTERY,
             "%",
         )
 

@@ -1,6 +1,7 @@
 """Config flow for AL-KO."""
 from datetime import timedelta
 import logging
+from typing import Any
 
 import voluptuous as vol
 
@@ -36,7 +37,7 @@ class OAuth2FlowHandler(
         """Return logger."""
         return logging.getLogger(__name__)
 
-    async def async_step_user(self, user_input=None):
+    async def async_step_user(self, user_input=None) -> dict:
         """Handle a flow initialized by the user."""
         if self._async_current_entries():
             return self.async_abort(reason="single_instance_allowed")
@@ -65,11 +66,11 @@ class OAuth2FlowHandler(
         self._auth_implementation = implementation_id
         return await self.async_oauth_create_entry(self)
 
-    async def async_step_reauth(self, user_input=None):
+    async def async_step_reauth(self, user_input=None) -> dict:
         """Perform reauth upon an API authentication error."""
         return await self.async_step_reauth_confirm()
 
-    async def async_step_reauth_confirm(self, user_input=None):
+    async def async_step_reauth_confirm(self, user_input=None) -> dict:
         """Dialog that informs the user that reauth is required."""
         if user_input is None:
             return self.async_show_form(
@@ -128,3 +129,27 @@ class OAuth2FlowHandler(
         except Exception as e:
             _LOGGER.error(f"Error obtaining tokens: {e}")
             return self.async_abort(reason="token_request_failed")
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> dict:
+        """Handle reconfiguration of the integration."""
+        if user_input is None:
+            # Get existing entry data
+            entry = self._get_reconfigure_entry()
+            return self.async_show_form(
+                step_id="reconfigure",
+                data_schema=vol.Schema({
+                    vol.Required("username", default=entry.data.get("username", "")): str,
+                    vol.Required("password", default=entry.data.get("password", "")): str,
+                }),
+            )
+
+        self._username = user_input["username"]
+        self._password = user_input["password"]
+
+        # Get the implementation ID from the existing entry
+        entry = self._get_reconfigure_entry()
+        self._auth_implementation = entry.data["auth_implementation"]
+
+        return await self.async_oauth_create_entry(self)

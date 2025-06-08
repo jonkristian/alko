@@ -35,10 +35,11 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [
+    Platform.LAWN_MOWER,
     Platform.BINARY_SENSOR,
     Platform.SENSOR,
     Platform.SWITCH,
-    Platform.SELECT,
+    Platform.BUTTON,
     Platform.NUMBER,
 ]
 
@@ -76,11 +77,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = DataUpdateCoordinator(
         hass,
         _LOGGER,
-        # Name of the data. For logging purposes.
         name="alko_coordinator",
         update_method=async_update_data,
         # Polling interval. Will only be polled if there are subscribers.
-        update_interval=timedelta(seconds=120),
+        update_interval=timedelta(seconds=60),
     )
 
     # Fetch initial data so we have data when entities subscribe

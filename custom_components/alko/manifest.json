@@ -10,8 +10,17 @@
   ],
   "documentation": "https://github.com/jonkristian/alko",
   "requirements": [
-    "pyalko==0.3.1"
+    "pyalko==0.3.2"
   ],
-  "version": "0.3.1",
-  "iot_class": "cloud_polling"
+  "version": "0.3.2",
+  "iot_class": "cloud_polling",
+  "integration_type": "device",
+  "supported_platforms": [
+    "lawn_mower",
+    "binary_sensor",
+    "sensor",
+    "button",
+    "switch",
+    "number"
+  ]
 }
