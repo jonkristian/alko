@@ -67,8 +67,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         try:
             async with async_timeout.timeout(60):
                 await alko.get_devices()
-                _LOGGER.debug("Fetched devices: %s", repr(alko.devices))
-            return alko
+                return alko
         except AlkoAuthenticationException as exception:
             raise ConfigEntryAuthFailed from exception
         except (AlkoException, ClientResponseError) as exception:

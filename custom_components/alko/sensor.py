@@ -1,6 +1,7 @@
 """Support for AL-KO sensor platform."""
 import logging
 from datetime import datetime, timedelta
+from typing import Any
 
 from pyalko import Alko
 from pyalko.objects.device import AlkoDevice, Thingstate
@@ -11,13 +12,21 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import (
+    PERCENTAGE,
+    UnitOfTime,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
+from homeassistant.helpers.event import callback
+from homeassistant.helpers import entity_registry as er
 
 from . import AlkoDeviceEntity
 from .const import DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -30,12 +39,23 @@ async def async_setup_entry(
 
     for device in coordinator.data.devices:
         cls_list = []
-        if device.thingState.state.reported.operationState:
-            cls_list.append(AlkoOperationSensor)
-            cls_list.append(AlkoErrorSensor)
-            cls_list.append(AlkoBladeSensor)
-        if device.thingState.state.reported.batteryLevel:
-            cls_list.append(AlkoBatterySensor)
+        if device.thingState.state.reported is not None:
+            # Check if device supports operation state
+            if hasattr(device.thingState.state.reported, "operationState"):
+                cls_list.append(AlkoOperationSensor)
+
+            # Check if device supports operation error
+            if hasattr(device.thingState.state.reported, "operationError"):
+                cls_list.append(AlkoErrorSensor)
+
+            # Check if device supports blade remaining
+            if hasattr(device.thingState.state.reported, "operationTimeBlade"):
+                cls_list.append(AlkoBladeSensor)
+
+            # Check if device supports battery level
+            if hasattr(device.thingState.state.reported, "batteryLevel"):
+                cls_list.append(AlkoBatterySensor)
+
         for cls in cls_list:
             entities.append(
                 cls(
@@ -75,6 +95,11 @@ class AlkoSensor(AlkoDeviceEntity, SensorEntity):
         """Return the unit this state is expressed in."""
         return self._unit_of_measurement
 
+    @property
+    def state(self) -> str:
+        """Return the state of the sensor."""
+        return self.device.thingState.state.reported.operationState
+
 
 class AlkoOperationSensor(AlkoSensor):
     """Defines an AL-KO State sensor."""
@@ -83,7 +108,6 @@ class AlkoOperationSensor(AlkoSensor):
         self,
         coordinator: DataUpdateCoordinator,
         device: AlkoDevice,
-        unit_of_measurement: str = None,
     ) -> None:
         """Initialize AL-KO sensor."""
 
@@ -97,7 +121,6 @@ class AlkoOperationSensor(AlkoSensor):
             device,
             f"{device.thingName}_operation_state",
             "Operation State",
-            unit_of_measurement,
         )
 
         self._attr_extra_state_attributes["substate"] = self.device.thingState.state.reported.operationSubState
@@ -118,7 +141,6 @@ class AlkoErrorSensor(AlkoSensor):
         self,
         coordinator: DataUpdateCoordinator,
         device: AlkoDevice,
-        unit_of_measurement: str = None,
     ) -> None:
         """Initialize AL-KO sensor."""
 
@@ -132,7 +154,6 @@ class AlkoErrorSensor(AlkoSensor):
             device,
             f"{device.thingName}_operation_error",
             "Operation Error",
-            unit_of_measurement,
         )
 
         if self.device.thingState.state.reported.operationError.code is not None:
@@ -147,11 +168,12 @@ class AlkoErrorSensor(AlkoSensor):
 class AlkoBladeSensor(AlkoSensor):
     """Defines an AL-KO Blade sensor."""
 
+    _attr_icon = "mdi:fan"
+
     def __init__(
         self,
         coordinator: DataUpdateCoordinator,
         device: AlkoDevice,
-        unit_of_measurement: str = None,
     ) -> None:
         """Initialize AL-KO sensor."""
 
@@ -176,24 +198,20 @@ class AlkoBladeSensor(AlkoSensor):
         return self.device.thingState.state.reported.remainingBladeLifetime
 
 
-class AlkoBatterySensor(AlkoSensor):
+class AlkoBatterySensor(AlkoDeviceEntity, SensorEntity):
     """Defines an AL-KO Battery sensor."""
 
-    def __init__(
-        self,
-        coordinator: DataUpdateCoordinator,
-        device: AlkoDevice,
-        unit_of_measurement: str = None,
-    ) -> None:
-        """Initialize AL-KO sensor."""
+    _attr_device_class = SensorDeviceClass.BATTERY
+    _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_name = "Battery Level"
 
+    def __init__(self, coordinator, device):
         super().__init__(
             coordinator,
             device,
             f"{device.thingName}_battery_level",
-            "Battery Level",
-            SensorDeviceClass.BATTERY,
-            "%",
+            "Battery Level"
         )
 
     @property

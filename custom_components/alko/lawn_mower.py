@@ -14,9 +14,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers import entity_registry as er
 
 from . import AlkoDeviceEntity
 from .const import DOMAIN
+from .sensor import AlkoOperationSensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -58,13 +60,13 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
         super().__init__(
             coordinator,
             device,
-            f"{device.thingName}_mower",
-            "Mower",
+            device.thingName,  # unique_id
+            device.thingAttributes.thingModel,  # name from device model
         )
+        self._state = self._get_state_from_device()
 
-    @property
-    def state(self) -> str:
-        """Return the state of the mower."""
+    def _get_state_from_device(self) -> str:
+        """Get state from device."""
         if not self.device.thingState.state.reported.isConnected:
             return "unavailable"
 
@@ -72,8 +74,15 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
             return "error"
 
         state = self.device.thingState.state.reported.operationState
+        substate = self.device.thingState.state.reported.operationSubState
+        situation = self.device.thingState.state.reported.operationSituation
+
+        # Check if mower is locked
+        if substate == "LOCKED_PIN" or situation == "OPERATION_NOT_PERMITTED_LOCKED":
+            return "error"
+
         if state == "IDLE":
-            return "docked"
+            return "paused"
         if state == "WORKING":
             return "mowing"
         if state == "HOMING":
@@ -85,26 +94,62 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
 
         return "unknown"
 
+    @property
+    def state(self) -> str:
+        """Return the state of the mower."""
+        return self._state
+
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass."""
+        await super().async_added_to_hass()
+        self._state = self._get_state_from_device()
+
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self._state = self._get_state_from_device()
+        self.async_schedule_update_ha_state()
+
     async def async_start_mowing(self) -> None:
         """Start mowing."""
         try:
+            # Check if mower is locked
+            if (self.device.thingState.state.reported.operationSubState == "LOCKED_PIN" or
+                    self.device.thingState.state.reported.operationSituation == "OPERATION_NOT_PERMITTED_LOCKED"):
+                _LOGGER.error("Cannot start mower: Mower is locked")
+                return
+
+            # Make API call first
             await self._update_device(self.device, operationState="WORKING")
+            await self.coordinator.async_refresh()
+
+            # Update state last
+            self._state = "mowing"
+            self.async_write_ha_state()
         except AlkoException as exception:
-            _LOGGER.error(exception)
-        await self.coordinator.async_refresh()
+            _LOGGER.error("Failed to start mowing: %s", exception)
 
     async def async_pause(self) -> None:
         """Pause mowing."""
         try:
+            # Make API call first
             await self._update_device(self.device, operationState="IDLE")
+            await self.coordinator.async_refresh()
+
+            # Update state last
+            self._state = "paused"
+            self.async_write_ha_state()
         except AlkoException as exception:
-            _LOGGER.error(exception)
-        await self.coordinator.async_refresh()
+            _LOGGER.error("Failed to pause mowing: %s", exception)
 
     async def async_dock(self) -> None:
         """Return to charging station."""
         try:
+            # Make API call first
             await self._update_device(self.device, operationState="HOMING")
+            await self.coordinator.async_refresh()
+
+            # Update state last
+            self._state = "returning"
+            self.async_write_ha_state()
         except AlkoException as exception:
-            _LOGGER.error(exception)
-        await self.coordinator.async_refresh()
+            _LOGGER.error("Failed to dock mower: %s", exception)

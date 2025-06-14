@@ -18,6 +18,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
@@ -27,25 +28,33 @@ async def async_setup_entry(
     entities = []
 
     for device in coordinator.data.devices:
-        # Check if device supports rain detection
-        if device.thingState.state.reported.situationFlags.rainDetected is not None:
+        cls_list = []
+        if hasattr(device.thingState.state.reported, "situationFlags"):
+            # Check if device supports rain detection
+            if hasattr(device.thingState.state.reported.situationFlags, "rainDetected"):
+                cls_list.append(AlkoRainDetectedSensor)
+            # Check if device supports rain allows mowing status
+            if hasattr(device.thingState.state.reported.situationFlags, "rainAllowsMowing"):
+                cls_list.append(AlkoRainAllowsMowingSensor)
+            # Check if device supports frost detection
+            if hasattr(device.thingState.state.reported.situationFlags, "frostDetected"):
+                cls_list.append(AlkoFrostDetectedSensor)
+            # Check if device supports frost allows mowing status
+            if hasattr(device.thingState.state.reported.situationFlags, "frostAllowsMowing"):
+                cls_list.append(AlkoFrostAllowsMowingSensor)
+            # Check if device supports charger contact status
+            if hasattr(device.thingState.state.reported.situationFlags, "chargerContact"):
+                cls_list.append(AlkoChargerContactBinarySensor)
+            # Check if device supports day cancelled status
+            if hasattr(device.thingState.state.reported.situationFlags, "dayCancelled"):
+                cls_list.append(AlkoDayCancelledBinarySensor)
+
+        for cls in cls_list:
             entities.append(
-                AlkoRainDetectedSensor(coordinator, device)
-            )
-        # Check if device supports rain allows mowing status
-        if device.thingState.state.reported.situationFlags.rainAllowsMowing is not None:
-            entities.append(
-                AlkoRainAllowsMowingSensor(coordinator, device)
-            )
-        # Check if device supports frost detection
-        if device.thingState.state.reported.situationFlags.frostDetected is not None:
-            entities.append(
-                AlkoFrostDetectedSensor(coordinator, device)
-            )
-        # Check if device supports frost allows mowing status
-        if device.thingState.state.reported.situationFlags.frostAllowsMowing is not None:
-            entities.append(
-                AlkoFrostAllowsMowingSensor(coordinator, device)
+                cls(
+                    coordinator,
+                    device,
+                )
             )
 
     async_add_entities(entities, True)
@@ -147,3 +156,52 @@ class AlkoFrostAllowsMowingSensor(AlkoDeviceEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Return true if mowing is allowed despite frost."""
         return self.device.thingState.state.reported.situationFlags.frostAllowsMowing
+
+
+class AlkoChargerContactBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
+    """Defines an AL-KO Charger Contact binary sensor."""
+
+    _attr_icon = "mdi:power-plug"
+    _attr_device_class = BinarySensorDeviceClass.PLUG
+
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator,
+        device: AlkoDevice,
+    ) -> None:
+        """Initialize AL-KO binary sensor."""
+        super().__init__(
+            coordinator,
+            device,
+            f"{device.thingName}_charger_contact",
+            "Charger Contact",
+        )
+
+    @property
+    def is_on(self) -> bool:
+        """Return the state of the binary sensor."""
+        return self.device.thingState.state.reported.situationFlags.chargerContact
+
+
+class AlkoDayCancelledBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
+    """Defines an AL-KO Day Cancelled binary sensor."""
+
+    _attr_icon = "mdi:calendar-remove"
+
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator,
+        device: AlkoDevice,
+    ) -> None:
+        """Initialize AL-KO binary sensor."""
+        super().__init__(
+            coordinator,
+            device,
+            f"{device.thingName}_day_cancelled",
+            "Day Cancelled",
+        )
+
+    @property
+    def is_on(self) -> bool:
+        """Return the state of the binary sensor."""
+        return self.device.thingState.state.reported.situationFlags.dayCancelled

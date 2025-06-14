@@ -21,6 +21,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
@@ -30,25 +31,27 @@ async def async_setup_entry(
     entities = []
 
     for device in coordinator.data.devices:
-        # Check if device supports rain sensitivity
-        if device.thingState.state.reported.rainSensitivity is not None:
+        cls_list = []
+        if device.thingState.state.reported is not None:
+            # Check if device supports rain sensitivity
+            if hasattr(device.thingState.state.reported, "rainSensitivity"):
+                cls_list.append(AlkoRainSensitivity)
+            # Check if device supports rain delay
+            if hasattr(device.thingState.state.reported, "rainDelay"):
+                cls_list.append(AlkoRainDelay)
+            # Check if device supports frost threshold
+            if hasattr(device.thingState.state.reported, "frostThreshold"):
+                cls_list.append(AlkoFrostThreshold)
+            # Check if device supports frost delay
+            if hasattr(device.thingState.state.reported, "frostDelay"):
+                cls_list.append(AlkoFrostDelay)
+
+        for cls in cls_list:
             entities.append(
-                AlkoRainSensitivity(coordinator, device)
-            )
-        # Check if device supports rain delay
-        if device.thingState.state.reported.rainDelay is not None:
-            entities.append(
-                AlkoRainDelay(coordinator, device)
-            )
-        # Check if device supports frost threshold
-        if device.thingState.state.reported.frostThreshold is not None:
-            entities.append(
-                AlkoFrostThreshold(coordinator, device)
-            )
-        # Check if device supports frost delay
-        if device.thingState.state.reported.frostDelay is not None:
-            entities.append(
-                AlkoFrostDelay(coordinator, device)
+                cls(
+                    coordinator,
+                    device,
+                )
             )
 
     async_add_entities(entities, True)
@@ -82,12 +85,17 @@ class AlkoRainSensitivity(AlkoDeviceEntity, NumberEntity):
         return float(self.device.thingState.state.reported.rainSensitivity)
 
     async def async_set_native_value(self, value: float) -> None:
-        """Update the current value."""
+        """Set the value."""
         try:
+            # Make API call first
             await self._update_device(self.device, rainSensitivity=int(value))
+            await self.coordinator.async_refresh()
+
+            # Update state immediately
+            self._value = value
+            self.async_write_ha_state()
         except AlkoException as exception:
-            _LOGGER.error(exception)
-        await self.coordinator.async_refresh()
+            _LOGGER.error("Failed to set value: %s", exception)
 
 
 class AlkoRainDelay(AlkoDeviceEntity, NumberEntity):
@@ -119,18 +127,23 @@ class AlkoRainDelay(AlkoDeviceEntity, NumberEntity):
         return float(self.device.thingState.state.reported.rainDelay)
 
     async def async_set_native_value(self, value: float) -> None:
-        """Update the current value."""
+        """Set the value."""
         try:
+            # Make API call first
             await self._update_device(self.device, rainDelay=int(value))
+            await self.coordinator.async_refresh()
+
+            # Update state immediately
+            self._value = value
+            self.async_write_ha_state()
         except AlkoException as exception:
-            _LOGGER.error(exception)
-        await self.coordinator.async_refresh()
+            _LOGGER.error("Failed to set value: %s", exception)
 
 
 class AlkoFrostThreshold(AlkoDeviceEntity, NumberEntity):
     """Defines an AL-KO frost threshold number."""
 
-    _attr_icon = "mdi:thermometer-snowflake"
+    _attr_icon = "mdi:snowflake-thermometer"
     _attr_native_min_value = -10  # Assuming minimum temperature, adjust if needed
     _attr_native_max_value = 10   # Assuming maximum temperature, adjust if needed
     _attr_native_step = 1
@@ -156,18 +169,23 @@ class AlkoFrostThreshold(AlkoDeviceEntity, NumberEntity):
         return float(self.device.thingState.state.reported.frostThreshold)
 
     async def async_set_native_value(self, value: float) -> None:
-        """Update the current value."""
+        """Set the value."""
         try:
+            # Make API call first
             await self._update_device(self.device, frostThreshold=int(value))
+            await self.coordinator.async_refresh()
+
+            # Update state immediately
+            self._value = value
+            self.async_write_ha_state()
         except AlkoException as exception:
-            _LOGGER.error(exception)
-        await self.coordinator.async_refresh()
+            _LOGGER.error("Failed to set value: %s", exception)
 
 
 class AlkoFrostDelay(AlkoDeviceEntity, NumberEntity):
     """Defines an AL-KO frost delay number."""
 
-    _attr_icon = "mdi:timer-snowflake"
+    _attr_icon = "mdi:timer"
     _attr_native_min_value = 0
     _attr_native_max_value = 240  # Assuming 4 hours max, adjust if needed
     _attr_native_step = 1
@@ -193,9 +211,14 @@ class AlkoFrostDelay(AlkoDeviceEntity, NumberEntity):
         return float(self.device.thingState.state.reported.frostDelay)
 
     async def async_set_native_value(self, value: float) -> None:
-        """Update the current value."""
+        """Set the value."""
         try:
+            # Make API call first
             await self._update_device(self.device, frostDelay=int(value))
+            await self.coordinator.async_refresh()
+
+            # Update state immediately
+            self._value = value
+            self.async_write_ha_state()
         except AlkoException as exception:
-            _LOGGER.error(exception)
-        await self.coordinator.async_refresh()
+            _LOGGER.error("Failed to set value: %s", exception)
