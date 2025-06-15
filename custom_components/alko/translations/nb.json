@@ -1,0 +1,233 @@
+{
+  "title": "AL-KO",
+  "config": {
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_account%]",
+      "already_in_progress": "[%key:common::config_flow::abort::already_in_progress%]",
+      "authorize_url_timeout": "[%key:common::config_flow::abort::oauth2_authorize_url_timeout%]",
+      "missing_configuration": "[%key:common::config_flow::abort::oauth2_missing_configuration%]",
+      "no_url_available": "Ingen URL tilgjengelig. For informasjon om denne feilen, [sjekk hjelpeseksjonen]({docs_url})",
+      "oauth_error": "[%key:common::config_flow::abort::oauth2_error%]",
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
+    },
+    "create_entry": {
+      "default": "[%key:common::config_flow::create_entry::authenticated%]"
+    },
+    "step": {
+      "reauth_confirm": {
+        "title": "[%key:common::config_flow::title::reauth%]",
+        "description": "AL-KO-integrasjonen må re-autentisere kontoen din"
+      },
+      "reconfigure": {
+        "description": "Oppdater AL-KO-påloggingsinformasjonen din om nødvendig",
+        "data": {
+          "username": "Brukernavn",
+          "password": "Passord"
+        }
+      },
+      "user": {
+        "title": "Fyll inn AL-KO brukernavn og passord.",
+        "data": {
+          "username": "Brukernavn",
+          "password": "Passord",
+          "client_id": "Klient-ID",
+          "client_secret": "Klient-hemmelighet"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "error": {
+        "name": "Driftsfeil",
+        "state": {
+          "999": "OK",
+          "1": "Vippesensor aktivert",
+          "2": "Løftesensor er aktivert",
+          "3": "Bumpsensor skadet",
+          "4": "Blader stoppet",
+          "5": "Bumpsensor aktivert",
+          "6": "Bumpsensor-tilkobling",
+          "7": "Ingen sløyfesignal",
+          "8": "Svakt sløyfesignal",
+          "9": "Grensesensorfeil",
+          "10": "Klipper utenfor definert område",
+          "11": "Klipper utenfor definert område",
+          "19": "Ikke kalibrert",
+          "20": "Motorstrømforsyningsfeil",
+          "21": "Motorstrømforsyningsfeil",
+          "22": "Motorstrømutbrudd",
+          "23": "Motorstrømforsyningsfeil",
+          "24": "Motorstrømfeil",
+          "25": "Motorstrømforsyningsfeil",
+          "26": "Motorstrømforsyningsfeil",
+          "27": "Motorstrømforsyningsfeil",
+          "28": "Motorstrømforsyningsfeil",
+          "29": "Motorstrømforsyningsfeil",
+          "30": "Motorstrømforsyningsfeil",
+          "31": "Motorstrømforsyningsfeil",
+          "32": "Motorstrømforsyningsfeil",
+          "33": "Motorstrømfeil",
+          "34": "Motorstrømforsyningsfeil",
+          "35": "Motorstrømfeil",
+          "36": "Motorstrømfeil",
+          "37": "Motorstrømforsyningsfeil",
+          "38": "Batteri er utladet",
+          "39": "Venstre drivmotorfeil",
+          "40": "Venstre drivmotorfeil",
+          "41": "Venstre drivmotorfeil",
+          "42": "Venstre drivmotorfeil",
+          "43": "Venstre drivmotorfeil",
+          "44": "Venstre drivmotorfeil",
+          "45": "Venstre drivmotor overstrøm",
+          "46": "Venstre drivmotor overstrøm",
+          "47": "Venstre drivmotor overoppheting",
+          "48": "Venstre drivmotorfeil",
+          "49": "Venstre drivmotorfeil",
+          "51": "Venstre drivmotorfeil",
+          "52": "Venstre drivmotorfeil",
+          "53": "Venstre drivmotorfeil",
+          "54": "Venstre drivmotorfeil",
+          "55": "Venstre drivmotorfeil",
+          "56": "Venstre drivmotorfeil",
+          "57": "Venstre drivmotorfeil",
+          "58": "Venstre drivmotorfeil",
+          "59": "Høyre drivmotorfeil",
+          "60": "Høyre drivmotorfeil",
+          "61": "Høyre drivmotorfeil",
+          "62": "Høyre drivmotorfeil",
+          "63": "Høyre drivmotorfeil",
+          "64": "Høyre drivmotorfeil",
+          "65": "Høyre drivmotor overstrøm",
+          "66": "Høyre drivmotor overstrøm",
+          "67": "Høyre drivmotor overoppheting",
+          "68": "Høyre drivmotorfeil",
+          "69": "Høyre drivmotorfeil",
+          "70": "Høyre drivmotorfeil",
+          "71": "Høyre drivmotorfeil",
+          "72": "Høyre drivmotorfeil",
+          "73": "Høyre drivmotorfeil",
+          "74": "Høyre drivmotorfeil",
+          "75": "Høyre drivmotorfeil",
+          "76": "Høyre drivmotorfeil",
+          "77": "Høyre drivmotorfeil",
+          "78": "Høyre drivmotorfeil",
+          "79": "Blademotorfeil",
+          "80": "Blademotorfeil",
+          "81": "Blademotorfeil",
+          "82": "Blademotorfeil",
+          "83": "Blademotorfeil",
+          "84": "Blademotorfeil",
+          "85": "Blademotor overstrøm",
+          "86": "Blademotorfeil",
+          "87": "Blademotorfeil",
+          "88": "Blademotorfeil",
+          "89": "Blademotorfeil",
+          "90": "Blademotorfeil",
+          "91": "Blademotorfeil",
+          "92": "Blademotorfeil",
+          "93": "Blademotorfeil",
+          "94": "Blademotorfeil",
+          "95": "Blademotorfeil",
+          "96": "Blademotorfeil",
+          "97": "Blademotorfeil",
+          "98": "Blademotorfeil",
+          "99": "Automatisk frigjøring ikke mulig",
+          "100": "Kunne ikke frigjøre klipper",
+          "101": "Baklengs feilet",
+          "102": "Feil PIN",
+          "103": "Basestasjonskontaktfeil",
+          "104": "Batteri overopphetet",
+          "105": "Batteri overopphetet",
+          "106": "Batteri overopphetet",
+          "107": "Batteritemperatur for lav",
+          "108": "Batteritemperatur for lav",
+          "109": "Blademotor overopphetet",
+          "110": "Blademotor overopphetet",
+          "111": "Blademotorkontrollfeil",
+          "112": "Venstre drivmotorfeil",
+          "113": "Høyre drivmotorfeil",
+          "114": "Blademotorfeil",
+          "115": "Venstre drivmotorfeil",
+          "116": "Høyre drivmotorfeil",
+          "117": "Blademotorfeil",
+          "118": "Grensekabel bundet",
+          "119": "Høyre bumpsensor aktivert",
+          "120": "Venstre bumpsensor aktivert",
+          "125": "Frigjøring feilet",
+          "126": "Venstre drivmotor overopphetet",
+          "127": "Høyre drivmotor overopphetet",
+          "128": "Klipper fast",
+          "129": "Venstre hjulmotor blokkert",
+          "130": "Høyre hjulmotor blokkert",
+          "132": "Kunne ikke sette klippehøyde",
+          "133": "Blademotor blokkert",
+          "134": "Klipper fast",
+          "135": "Batteri frakoblet"
+        }
+      }
+    }
+  },
+  "services": {
+    "alko_update_mowing_window": {
+      "name": "Oppdater klippevindu",
+      "description": "Oppdater eller endre et klippevindu for en spesifikk dag.",
+      "fields": {
+        "target": {
+          "name": "Gressklipper",
+          "description": "Velg gressklipperen du vil oppdatere vinduet for."
+        },
+        "day": {
+          "name": "Dag",
+          "description": "Ukedag som skal endres."
+        },
+        "window_number": {
+          "name": "Vindusnummer",
+          "description": "Hvilket vindu som skal endres (1 eller 2)."
+        },
+        "start_hour": {
+          "name": "Starttime",
+          "description": "Time for å starte klipping (00-23)."
+        },
+        "start_minute": {
+          "name": "Startminutt",
+          "description": "Minutt for å starte klipping (00-59)."
+        },
+        "duration": {
+          "name": "Varighet",
+          "description": "Varighet i minutter (1-360)."
+        },
+        "type": {
+          "name": "Type",
+          "description": "Type klippeoperasjon."
+        },
+        "entry_point": {
+          "name": "Inngangspunkt",
+          "description": "Inngangspunktsnummer for klippeoperasjonen."
+        }
+      }
+    },
+    "alko_start_manual_mowing": {
+      "name": "Start manuell klipping",
+      "description": "Start en manuell klippeoperasjon med spesifiserte parametere.",
+      "fields": {
+        "target": {
+          "name": "Gressklipper",
+          "description": "Velg gressklipperen du vil starte manuell klipping for."
+        },
+        "duration": {
+          "name": "Varighet",
+          "description": "Varighet i minutter (1-360)."
+        },
+        "type": {
+          "name": "Type",
+          "description": "Type klippeoperasjon."
+        },
+        "entry_point": {
+          "name": "Inngangspunkt",
+          "description": "Inngangspunktsnummer for klippeoperasjonen."
+        }
+      }
+    }
+  }
+}

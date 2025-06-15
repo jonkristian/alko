@@ -4,7 +4,8 @@
     "sensor",
     "switch",
     "button",
-    "lawn_mower"
+    "lawn_mower",
+    "calendar"
   ],
   "render_readme": true,
   "homeassistant": "2025.5.3"

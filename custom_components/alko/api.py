@@ -11,6 +11,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class OAuth2SessionAlko(config_entry_oauth2_flow.OAuth2Session):
     """OAuth2Session for Alko."""
 
@@ -63,6 +64,18 @@ class AlkoLocalOAuth2Implementation(
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
-        resp = await session.post(self.token_url, headers=headers, data=data)
-        resp.raise_for_status()
-        return cast(dict, await resp.json())
+        try:
+            resp = await session.post(self.token_url, headers=headers, data=data)
+            if not resp.ok:
+                error_text = await resp.text()
+                _LOGGER.error("Token request failed with status %d: %s",
+                              resp.status, error_text)
+                raise config_entry_oauth2_flow.OAuth2Error(
+                    f"Token request failed: {resp.status} - {error_text}"
+                )
+            resp.raise_for_status()
+            return cast(dict, await resp.json())
+        except Exception as e:
+            _LOGGER.error("Error during token request: %s", str(e))
+            raise config_entry_oauth2_flow.OAuth2Error(
+                f"Token request failed: {str(e)}")

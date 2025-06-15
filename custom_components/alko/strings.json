@@ -5,15 +5,22 @@
       "user": {
         "title": "Fill in your AL-KO username and password.",
         "data": {
-          "username": "",
-          "password": "",
-          "client_id": "",
-          "client_secret": ""
+          "username": "Username",
+          "password": "Password",
+          "client_id": "Client ID",
+          "client_secret": "Client Secret"
         }
       },
       "reauth_confirm": {
         "title": "[%key:common::config_flow::title::reauth%]",
         "description": "AL-KO integration needs to re-authenticate your account"
+      },
+      "reconfigure": {
+        "description": "Update your AL-KO credentials if needed",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
       }
     },
     "abort": {
@@ -22,11 +29,51 @@
       "oauth_error": "[%key:common::config_flow::abort::oauth2_error%]",
       "missing_configuration": "[%key:common::config_flow::abort::oauth2_missing_configuration%]",
       "authorize_url_timeout": "[%key:common::config_flow::abort::oauth2_authorize_url_timeout%]",
-      "no_url_available": "[%key:common::config_flow::abort::oauth2_no_url_available%]",
+      "no_url_available": "No URL available. For information about this error, [check the help section]({docs_url})",
       "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
     },
     "create_entry": {
       "default": "[%key:common::config_flow::create_entry::authenticated%]"
+    }
+  },
+  "services": {
+    "alko_set_mowing_window": {
+      "name": "Set Mowing Window",
+      "description": "Set or modify a mowing window for a specific day.",
+      "fields": {
+        "target": {
+          "name": "Lawn Mower",
+          "description": "Select the lawn mower to set the window for."
+        },
+        "day": {
+          "name": "Day",
+          "description": "Day of the week to modify."
+        },
+        "window_number": {
+          "name": "Window Number",
+          "description": "Which window to modify (1 or 2)."
+        },
+        "start_hour": {
+          "name": "Start Hour",
+          "description": "Hour to start mowing (00-23)."
+        },
+        "start_minute": {
+          "name": "Start Minute",
+          "description": "Minute to start mowing (00-59)."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "Duration in minutes (1-360)."
+        },
+        "type": {
+          "name": "Type",
+          "description": "Type of mowing operation."
+        },
+        "entry_point": {
+          "name": "Entry Point",
+          "description": "Entry point number for the mowing operation."
+        }
+      }
     }
   }
 }

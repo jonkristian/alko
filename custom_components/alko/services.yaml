@@ -1,0 +1,145 @@
+alko_update_mowing_window:
+  name: Update Mowing Window
+  description: Update or modify a mowing window for a specific day.
+  fields:
+    target:
+      name: Target
+      description: The lawn mower entity to configure
+      required: true
+      selector:
+        target:
+          entity:
+            domain: lawn_mower
+    day:
+      name: Day
+      description: Day of the week to modify
+      required: true
+      default: monday
+      selector:
+        select:
+          options:
+            - label: "Monday"
+              value: monday
+            - label: "Tuesday"
+              value: tuesday
+            - label: "Wednesday"
+              value: wednesday
+            - label: "Thursday"
+              value: thursday
+            - label: "Friday"
+              value: friday
+            - label: "Saturday"
+              value: saturday
+            - label: "Sunday"
+              value: sunday
+    window_number:
+      name: Window Number
+      description: Which window to modify (1 or 2)
+      required: true
+      default: 1
+      selector:
+        select:
+          options:
+            - 1
+            - 2
+    start_hour:
+      name: Start Hour
+      description: Hour to start mowing (00-23)
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 23
+          mode: box
+    start_minute:
+      name: Start Minute
+      description: Minute to start mowing (00-59)
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 59
+          mode: box
+    duration:
+      name: Duration
+      description: Duration in minutes (1-360)
+      required: true
+      default: 120
+      selector:
+        number:
+          min: 1
+          max: 360
+          step: 5
+          mode: slider
+    type:
+      name: Type
+      description: Type of mowing operation
+      required: true
+      default: mow
+      selector:
+        select:
+          options:
+            - label: "Mow"
+              value: mow
+            - label: "First mow border then area"
+              value: first_mow_border_then_area
+            - label: "Narrow passage"
+              value: narrow_passage
+            - label: "Deactivated"
+              value: deactivated
+    entry_point:
+      name: Entry Point
+      description: Entry point number for the mowing operation
+      required: true
+      default: 0
+      selector:
+        number:
+          min: 0
+          mode: box
+
+alko_start_manual_mowing:
+  name: Start Manual Mowing
+  description: Start a manual mowing operation with specified parameters.
+  fields:
+    target:
+      name: Target
+      description: The lawn mower entity to configure
+      required: true
+      selector:
+        target:
+          entity:
+            domain: lawn_mower
+    duration:
+      name: Duration
+      description: Duration in minutes (1-360)
+      required: true
+      default: 120
+      selector:
+        number:
+          min: 1
+          max: 360
+          step: 5
+          mode: slider
+    type:
+      name: Type
+      description: Type of mowing operation
+      required: true
+      default: mow
+      selector:
+        select:
+          options:
+            - label: "Mow"
+              value: mow
+            - label: "First mow border then area"
+              value: first_mow_border_then_area
+            - label: "Narrow passage"
+              value: narrow_passage
+    entry_point:
+      name: Entry Point
+      description: Entry point number for the mowing operation
+      required: true
+      default: 0
+      selector:
+        number:
+          min: 0
+          mode: box

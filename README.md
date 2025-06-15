@@ -1,41 +1,84 @@
 # AL-KO Robolinho component for Home Assistant
+
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![maintainer](https://img.shields.io/badge/maintainer-%40jonkristian-blue.svg)](https://github.com/jonkristian)
+[![buy_me_a_coffee](https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg)](https://www.buymeacoffee.com/jonkristian)
+[![License](https://img.shields.io/github/license/jonkristian/alko)](https://github.com/jonkristian/alko/blob/main/LICENSE)
+
 This component allows you to integrate your AL-KO Robolinho mower in Home Assistant.
 
 ## Features
 
 ### Lawn Mower Integration
-- Start
-- Pause
-- Dock
-- Edge cutting mode
+- ▶️ Start
+- ⏸️ Pause
+- 🏠 Dock
 
 ### Sensors
-- Battery level
-- Operation state (IDLE, WORKING, HOMING)
-- Operation errors (with detailed error codes)
-- Remaining blade life
-- Rain detection status
-- Frost detection status
-- Mowing permission status (rain/frost conditions)
-- Charger contact status
-- Day cancelled status
+- 🔋 Battery level
+- 🔄 Operation state (IDLE, WORKING, HOMING)
+- ⚠️ Operation errors (with detailed error codes)
+- 🔪 Remaining blade life
+- 🌧️ Rain detection status
+- ❄️ Frost detection status
+- 🔌 Charger contact status
+- ⏰ Next operation time and details
+- 📶 RSSI signal strength
+- 🔍 Operation substate
+- ℹ️ Operation situation
+- ⏱️ Blade operation time
+- 👤 User interaction
 
 ### Settings
-- Toggle Eco Mode
-- Toggle Rain Sensor
-- Toggle Frost Sensor
-- Rain sensitivity (1-10)
-- Rain delay
-- Frost threshold temperature
-- Frost delay
-- Reset blade life
-- Pause for today
+- 🌱 Toggle Eco Mode
+- 🌧️ Toggle Rain Sensor
+- ❄️ Toggle Frost Sensor
+- 🌧️ Rain sensitivity (1-10)
+- ⏳ Rain delay
+- ❄️ Frost threshold temperature
+- ⏳ Frost delay
+- 🔄 Reset blade life
+- ⏸️ Pause for today
+
+### Calendar
+- 📅 View mowing window schedules
+- 🔍 Details: Status, Margin Mode, Narrow Passage
 
 ### Device Information
-- Firmware version
-- Hardware version
-- Serial number
-- Model information
+- 💾 Firmware version
+- 🔧 Hardware version
+- 🔑 Serial number
+- 📋 Model information
+
+## Services
+
+### Mowing Windows
+
+```yaml
+service: alko.alko_update_mowing_window
+target:
+  entity:
+    domain: lawn_mower
+data:
+  day: monday  # Day of the week (monday-sunday)
+  window_number: 1  # Window number (1 or 2)
+  start_hour: 9  # Start hour (0-23)
+  start_minute: 0  # Start minute (0-59)
+  duration: 120  # Duration in minutes (1-360)
+  type: mow  # Type of mowing operation (mow, first_mow_border_then_area, narrow_passage, deactivated)
+```
+
+### Manual Mowing
+
+```yaml
+service: alko.alko_start_manual_mowing
+target:
+  entity:
+    domain: lawn_mower
+data:
+  duration: 120  # Duration in minutes (1-360)
+  type: mow  # Type of mowing operation (mow, first_mow_border_then_area, narrow_passage)
+```
 
 # Installation
 

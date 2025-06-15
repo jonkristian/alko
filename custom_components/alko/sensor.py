@@ -1,10 +1,9 @@
 """Support for AL-KO sensor platform."""
 import logging
-from datetime import datetime, timedelta
-from typing import Any
+from datetime import timedelta
 
 from pyalko import Alko
-from pyalko.objects.device import AlkoDevice, Thingstate
+from pyalko.objects.device import AlkoDevice
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -13,15 +12,12 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    PERCENTAGE,
-    UnitOfTime,
+    PERCENTAGE
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
-from homeassistant.helpers.event import callback
-from homeassistant.helpers import entity_registry as er
 
 from . import AlkoDeviceEntity
 from .const import DOMAIN
@@ -55,6 +51,14 @@ async def async_setup_entry(
             # Check if device supports battery level
             if hasattr(device.thingState.state.reported, "batteryLevel"):
                 cls_list.append(AlkoBatterySensor)
+
+            # Check if device supports next operation
+            if hasattr(device.thingState.state.reported, "nextOperation"):
+                cls_list.append(AlkoNextOperationSensor)
+
+            # Check if device supports RSSI
+            if hasattr(device.thingState.state.reported, "rssi"):
+                cls_list.append(AlkoRssiSensor)
 
         for cls in cls_list:
             entities.append(
@@ -119,7 +123,7 @@ class AlkoOperationSensor(AlkoSensor):
         super().__init__(
             coordinator,
             device,
-            f"{device.thingName}_operation_state",
+            "operation_state",
             "Operation State",
         )
 
@@ -152,7 +156,7 @@ class AlkoErrorSensor(AlkoSensor):
         super().__init__(
             coordinator,
             device,
-            f"{device.thingName}_operation_error",
+            "operation_error",
             "Operation Error",
         )
 
@@ -184,7 +188,7 @@ class AlkoBladeSensor(AlkoSensor):
         super().__init__(
             coordinator,
             device,
-            f"{device.thingName}_blade_remaining",
+            "blade_remaining",
             "Remaining Blade Life",
             None,
             "h",
@@ -210,11 +214,110 @@ class AlkoBatterySensor(AlkoDeviceEntity, SensorEntity):
         super().__init__(
             coordinator,
             device,
-            f"{device.thingName}_battery_level",
-            "Battery Level"
+            "battery_level",
+            "Battery Level",
         )
 
     @property
     def state(self) -> int:
         """Return the state of the sensor."""
         return self.device.thingState.state.reported.batteryLevel
+
+
+class AlkoNextOperationSensor(AlkoDeviceEntity, SensorEntity):
+    """Defines an AL-KO Next Operation sensor."""
+
+    _attr_icon = "mdi:calendar-range"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(self, coordinator, device):
+        super().__init__(
+            coordinator,
+            device,
+            "next_operation",
+            "Next Operation"
+        )
+        self._attr_extra_state_attributes = {
+            "duration": None,
+            "narrow_passage": None,
+            "margin_mode": None,
+        }
+
+    @property
+    def state(self) -> str:
+        """Return the state of the sensor."""
+        current_time = dt_util.now()
+        today = current_time.strftime("%A").lower()
+        mowing_windows = self.device.thingState.state.reported.mowingWindows
+        is_day_cancelled = self.device.thingState.state.reported.situationFlags.dayCancelled
+
+        # Find next operation time
+        next_operation = None
+        next_window = None
+        days = ['monday', 'tuesday', 'wednesday',
+                'thursday', 'friday', 'saturday', 'sunday']
+        today_index = days.index(today)
+
+        # Check today and next 6 days
+        for i in range(7):
+            day = days[(today_index + i) % 7]
+            # Skip today if day is cancelled
+            if i == 0 and is_day_cancelled:
+                continue
+            if hasattr(mowing_windows, day):
+                windows = getattr(mowing_windows, day)
+                for window_num in ['window_1', 'window_2']:
+                    if hasattr(windows, window_num):
+                        window = getattr(windows, window_num)
+                        if window.activityMode:
+                            window_time = current_time.replace(
+                                hour=window.startHour,
+                                minute=window.startMinute,
+                                second=0,
+                                microsecond=0
+                            ) + timedelta(days=i)
+                            if window_time > current_time and (next_operation is None or window_time < next_operation):
+                                next_operation = window_time
+                                next_window = window
+
+        if next_operation:
+            next_operation = dt_util.as_local(next_operation)
+
+            # Update extra state attributes
+            if next_window:
+                self._attr_extra_state_attributes["duration"] = next_window.duration
+                self._attr_extra_state_attributes["margin_mode"] = next_window.marginMode
+                self._attr_extra_state_attributes["narrow_passage"] = next_window.narrowPassageMode
+
+            # Return ISO 8601 formatted timestamp
+            return next_operation.isoformat()
+
+        # Reset attributes if no next operation
+        self._attr_extra_state_attributes.update({
+            "duration": None,
+            "narrow_passage": None,
+            "margin_mode": None,
+        })
+        return "N/A"
+
+
+class AlkoRssiSensor(AlkoDeviceEntity, SensorEntity):
+    """Defines an AL-KO RSSI sensor."""
+
+    _attr_device_class = SensorDeviceClass.SIGNAL_STRENGTH
+    _attr_native_unit_of_measurement = "dBm"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_name = "RSSI"
+
+    def __init__(self, coordinator, device):
+        super().__init__(
+            coordinator,
+            device,
+            "rssi",
+            "RSSI"
+        )
+
+    @property
+    def state(self) -> int:
+        """Return the state of the sensor."""
+        return self.device.thingState.state.reported.rssi

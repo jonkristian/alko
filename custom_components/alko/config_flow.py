@@ -96,9 +96,19 @@ class OAuth2FlowHandler(
                 "scope": "alkoCustomerId alkoCulture offline_access introspection"
             }
 
+            _LOGGER.debug("Making token request with data: %s",
+                          {k: v if k != "password" else "***" for k, v in token_data.items()})
+
             token_response = await aiohttp_client.async_get_clientsession(self.hass).post(
                 "https://idp.al-ko.com/connect/token", data=token_data
             )
+
+            if not token_response.ok:
+                error_text = await token_response.text()
+                _LOGGER.error("Token request failed with status %d: %s",
+                              token_response.status, error_text)
+                return self.async_abort(reason="token_request_failed")
+
             token_response.raise_for_status()
             token_info = await token_response.json()
 
@@ -127,7 +137,7 @@ class OAuth2FlowHandler(
                 return self.async_abort(reason="reauth_successful")
             return self.async_create_entry(title="Alko", data=config_data)
         except Exception as e:
-            _LOGGER.error(f"Error obtaining tokens: {e}")
+            _LOGGER.error("Error obtaining tokens: %s", str(e))
             return self.async_abort(reason="token_request_failed")
 
     async def async_step_reconfigure(
@@ -137,11 +147,16 @@ class OAuth2FlowHandler(
         if user_input is None:
             # Get existing entry data
             entry = self._get_reconfigure_entry()
+
+            # Get stored credentials
+            stored_username = entry.data.get("username", "")
+            stored_password = entry.data.get("password", "")
+
             return self.async_show_form(
                 step_id="reconfigure",
                 data_schema=vol.Schema({
-                    vol.Required("username", default=entry.data.get("username", "")): str,
-                    vol.Required("password", default=entry.data.get("password", "")): str,
+                    vol.Required("username", default=stored_username): str,
+                    vol.Required("password", default=stored_password): str,
                 }),
             )
 

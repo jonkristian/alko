@@ -25,12 +25,14 @@ async def async_get_auth_implementation(
         ),
     )
 
+
 async def async_get_authorization_server(hass: HomeAssistant) -> AuthorizationServer:
     """Return authorization server."""
     return AuthorizationServer(
         authorize_url="",  # Overridden in config flow
         token_url=OAUTH2_TOKEN,
     )
+
 
 async def async_get_description_placeholders(hass: HomeAssistant) -> dict[str, str]:
     """Return description placeholders for the credentials dialog."""
@@ -39,12 +41,14 @@ async def async_get_description_placeholders(hass: HomeAssistant) -> dict[str, s
         "more_info_url": "https://developer.al-ko.com",
     }
 
+
 async def async_register_implementation(hass: HomeAssistant) -> None:
     """Register an implementation for AL-KO."""
     implementation = AlkoLocalOAuth2Implementation(
         hass,
         DOMAIN,
-        ClientCredential("", ""),  # Empty credentials as they're provided in config flow
+        # Empty credentials as they're provided in config flow
+        ClientCredential("", ""),
         AuthorizationServer(
             authorize_url="",  # Overridden in config flow.
             token_url=OAUTH2_TOKEN,

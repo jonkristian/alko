@@ -33,21 +33,24 @@ async def async_setup_entry(
             # Check if device supports rain detection
             if hasattr(device.thingState.state.reported.situationFlags, "rainDetected"):
                 cls_list.append(AlkoRainDetectedSensor)
-            # Check if device supports rain allows mowing status
-            if hasattr(device.thingState.state.reported.situationFlags, "rainAllowsMowing"):
-                cls_list.append(AlkoRainAllowsMowingSensor)
             # Check if device supports frost detection
             if hasattr(device.thingState.state.reported.situationFlags, "frostDetected"):
                 cls_list.append(AlkoFrostDetectedSensor)
-            # Check if device supports frost allows mowing status
-            if hasattr(device.thingState.state.reported.situationFlags, "frostAllowsMowing"):
-                cls_list.append(AlkoFrostAllowsMowingSensor)
             # Check if device supports charger contact status
             if hasattr(device.thingState.state.reported.situationFlags, "chargerContact"):
                 cls_list.append(AlkoChargerContactBinarySensor)
             # Check if device supports day cancelled status
             if hasattr(device.thingState.state.reported.situationFlags, "dayCancelled"):
                 cls_list.append(AlkoDayCancelledBinarySensor)
+            # Check if device supports robot is active status
+            if hasattr(device.thingState.state.reported.situationFlags, "robotIsActive"):
+                cls_list.append(AlkoRobotIsActiveBinarySensor)
+            # Check if device supports is connected status
+            if hasattr(device.thingState.state.reported, "isConnected"):
+                cls_list.append(AlkoIsConnectedBinarySensor)
+            # Check if device supports user interaction status
+            if hasattr(device.thingState.state.reported.situationFlags, "userInteraction"):
+                cls_list.append(AlkoUserInteractionBinarySensor)
 
         for cls in cls_list:
             entities.append(
@@ -75,7 +78,7 @@ class AlkoRainDetectedSensor(AlkoDeviceEntity, BinarySensorEntity):
         super().__init__(
             coordinator,
             device,
-            f"{device.thingName}_rain_detected",
+            "rain_detected",
             "Rain Detected",
         )
 
@@ -83,30 +86,6 @@ class AlkoRainDetectedSensor(AlkoDeviceEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Return true if rain is detected."""
         return self.device.thingState.state.reported.situationFlags.rainDetected
-
-
-class AlkoRainAllowsMowingSensor(AlkoDeviceEntity, BinarySensorEntity):
-    """Defines an AL-KO rain allows mowing binary sensor."""
-
-    _attr_icon = "mdi:robot-mower"
-
-    def __init__(
-        self,
-        coordinator: DataUpdateCoordinator,
-        device: AlkoDevice,
-    ) -> None:
-        """Initialize AL-KO rain allows mowing sensor."""
-        super().__init__(
-            coordinator,
-            device,
-            f"{device.thingName}_rain_allows_mowing",
-            "Mowing Allowed (Rain)",
-        )
-
-    @property
-    def is_on(self) -> bool:
-        """Return true if mowing is allowed despite rain."""
-        return self.device.thingState.state.reported.situationFlags.rainAllowsMowing
 
 
 class AlkoFrostDetectedSensor(AlkoDeviceEntity, BinarySensorEntity):
@@ -124,7 +103,7 @@ class AlkoFrostDetectedSensor(AlkoDeviceEntity, BinarySensorEntity):
         super().__init__(
             coordinator,
             device,
-            f"{device.thingName}_frost_detected",
+            "frost_detected",
             "Frost Detected",
         )
 
@@ -132,30 +111,6 @@ class AlkoFrostDetectedSensor(AlkoDeviceEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Return true if frost is detected."""
         return self.device.thingState.state.reported.situationFlags.frostDetected
-
-
-class AlkoFrostAllowsMowingSensor(AlkoDeviceEntity, BinarySensorEntity):
-    """Defines an AL-KO frost allows mowing binary sensor."""
-
-    _attr_icon = "mdi:robot-mower"
-
-    def __init__(
-        self,
-        coordinator: DataUpdateCoordinator,
-        device: AlkoDevice,
-    ) -> None:
-        """Initialize AL-KO frost allows mowing sensor."""
-        super().__init__(
-            coordinator,
-            device,
-            f"{device.thingName}_frost_allows_mowing",
-            "Mowing Allowed (Frost)",
-        )
-
-    @property
-    def is_on(self) -> bool:
-        """Return true if mowing is allowed despite frost."""
-        return self.device.thingState.state.reported.situationFlags.frostAllowsMowing
 
 
 class AlkoChargerContactBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
@@ -173,7 +128,7 @@ class AlkoChargerContactBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
         super().__init__(
             coordinator,
             device,
-            f"{device.thingName}_charger_contact",
+            "charger_contact",
             "Charger Contact",
         )
 
@@ -197,7 +152,7 @@ class AlkoDayCancelledBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
         super().__init__(
             coordinator,
             device,
-            f"{device.thingName}_day_cancelled",
+            "day_cancelled",
             "Day Cancelled",
         )
 
@@ -205,3 +160,102 @@ class AlkoDayCancelledBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Return the state of the binary sensor."""
         return self.device.thingState.state.reported.situationFlags.dayCancelled
+
+
+class AlkoRobotIsActiveBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
+    """Defines an AL-KO Robot Is Active binary sensor."""
+
+    _attr_icon = "mdi:robot-mower-outline"
+
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator,
+        device: AlkoDevice,
+    ) -> None:
+        """Initialize AL-KO robot is active sensor."""
+        super().__init__(
+            coordinator,
+            device,
+            "is_active",
+            "Is Active",
+        )
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if robot is active."""
+        return self.device.thingState.state.reported.situationFlags.robotIsActive
+
+
+class AlkoIsConnectedBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
+    """Defines an AL-KO Is Connected sensor."""
+
+    _attr_icon = "mdi:signal"
+
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator,
+        device: AlkoDevice,
+    ) -> None:
+        """Initialize AL-KO is connected binary sensor."""
+        super().__init__(
+            coordinator,
+            device,
+            "is_connected",
+            "Is Connected"
+        )
+
+    @property
+    def state(self) -> bool:
+        """Return the state of the sensor."""
+        return self.device.thingState.state.reported.isConnected
+
+
+class AlkoUserInteractionBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
+    """Defines an AL-KO User Interaction sensor."""
+
+    _attr_icon = "mdi:hand-wave"
+
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator,
+        device: AlkoDevice,
+    ) -> None:
+        """Initialize AL-KO user interaction binary sensor."""
+        super().__init__(
+            coordinator,
+            device,
+            "user_interaction",
+            "User Interaction"
+        )
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if user interaction is required."""
+        # Get the reported state
+        reported = self.device.thingState.state.reported
+
+        # Check if the device is locked (PIN required)
+        if reported.operationSubState == "LOCKED_PIN":
+            return True
+
+        # Check for any error code other than 999
+        if reported.operationError.code != 999:
+            return True
+
+        # Check for critical issues that require attention
+        flags = reported.situationFlags
+        if (
+            flags.batteryFailure or
+            flags.chargerFailure or
+            flags.bladeService or
+            flags.wheelMotorTemperatureHigh or
+            flags.stopAfterIssue or
+            not flags.operationPermitted
+        ):
+            return True
+
+        # Check operation situation for critical states
+        if reported.operationSituation == "OPERATION_NOT_PERMITTED_LOCKED":
+            return True
+
+        return False

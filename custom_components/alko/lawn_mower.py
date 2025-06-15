@@ -1,10 +1,11 @@
 """Support for AL-KO mower platform."""
 import logging
 from typing import Any
+from datetime import datetime
 
 from pyalko import Alko
-from pyalko.objects.device import AlkoDevice
 from pyalko.exceptions import AlkoException
+from pyalko.objects.device import AlkoDevice
 
 from homeassistant.components.lawn_mower import (
     LawnMowerEntity,
@@ -14,7 +15,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.helpers import entity_registry as er
 
 from . import AlkoDeviceEntity
 from .const import DOMAIN
@@ -60,8 +60,8 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
         super().__init__(
             coordinator,
             device,
-            device.thingName,  # unique_id
-            device.thingAttributes.thingModel,  # name from device model
+            "mower",
+            "Mower",
         )
         self._state = self._get_state_from_device()
 
@@ -119,7 +119,8 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
                 return
 
             # Make API call first
-            await self._update_device(self.device, operationState="WORKING")
+            rtc = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+            await self._update_device(self.device, operationState="WORKING", rtc=rtc)
             await self.coordinator.async_refresh()
 
             # Update state last
@@ -132,7 +133,8 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
         """Pause mowing."""
         try:
             # Make API call first
-            await self._update_device(self.device, operationState="IDLE")
+            rtc = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+            await self._update_device(self.device, operationState="IDLE", rtc=rtc)
             await self.coordinator.async_refresh()
 
             # Update state last
@@ -145,7 +147,8 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
         """Return to charging station."""
         try:
             # Make API call first
-            await self._update_device(self.device, operationState="HOMING")
+            rtc = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+            await self._update_device(self.device, operationState="HOMING", rtc=rtc)
             await self.coordinator.async_refresh()
 
             # Update state last

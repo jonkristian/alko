@@ -31,6 +31,7 @@ from .api import (
 )
 
 from .const import DOMAIN
+from .services import async_handle_start_manual_mowing, async_handle_update_mowing_window
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ PLATFORMS = [
     Platform.SWITCH,
     Platform.BUTTON,
     Platform.NUMBER,
+    Platform.CALENDAR,
 ]
 
 
@@ -88,6 +90,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    # Register services
+    hass.services.async_register(
+        DOMAIN,
+        "alko_update_mowing_window",
+        async_handle_update_mowing_window,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        "alko_start_manual_mowing",
+        async_handle_start_manual_mowing,
+    )
+
     return True
 
 
@@ -122,15 +136,23 @@ class AlkoEntity(CoordinatorEntity[DataUpdateCoordinator[Alko]]):
         self._serial_number = device.thingAttributes.serialNumber
         self._update_device = coordinator.data.update_device
 
+    def _normalize_model(self, model: str) -> str:
+        """Normalize the device model for use in entity IDs."""
+        # Convert to lowercase and replace spaces with underscores
+        normalized = model.lower().replace(" ", "_")
+        # Remove any special characters except underscores
+        normalized = "".join(c for c in normalized if c.isalnum() or c == "_")
+        return normalized
+
     @property
     def unique_id(self) -> str:
         """Return the unique ID for this entity."""
-        return self._key
+        return f"{self._normalize_model(self._device_model)}_{self._key}"
 
     @property
     def name(self) -> str:
         """Return the name of the entity."""
-        return self._name
+        return f"{self._device_model} {self._name}"
 
     @property
     def device(self) -> AlkoDevice:
@@ -148,8 +170,8 @@ class AlkoDeviceEntity(AlkoEntity):
             "identifiers": {(DOMAIN, self._device_name)},
             "manufacturer": "AL-KO",
             "model": self._device_model,
-            "name": self._device_name,
+            "name": self._device_model,
             "sw_version": self._firmware_main,
             "hw_version": self._hardware_main,
-            "serial_number": self._serial_number,
+            "serial_number": self._serial_number
         }

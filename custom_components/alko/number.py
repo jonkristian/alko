@@ -1,10 +1,9 @@
 """Support for AL-KO number platform."""
 import logging
-from typing import Any
 
 from pyalko import Alko
-from pyalko.objects.device import AlkoDevice
 from pyalko.exceptions import AlkoException
+from pyalko.objects.device import AlkoDevice
 
 from homeassistant.components.number import (
     NumberEntity,
@@ -75,7 +74,7 @@ class AlkoRainSensitivity(AlkoDeviceEntity, NumberEntity):
         super().__init__(
             coordinator,
             device,
-            f"{device.thingName}_rain_sensitivity",
+            "rain_sensitivity",
             "Rain Sensitivity",
         )
 
@@ -117,7 +116,7 @@ class AlkoRainDelay(AlkoDeviceEntity, NumberEntity):
         super().__init__(
             coordinator,
             device,
-            f"{device.thingName}_rain_delay",
+            "rain_delay",
             "Rain Delay",
         )
 
@@ -159,7 +158,7 @@ class AlkoFrostThreshold(AlkoDeviceEntity, NumberEntity):
         super().__init__(
             coordinator,
             device,
-            f"{device.thingName}_frost_threshold",
+            "frost_threshold",
             "Frost Threshold",
         )
 
@@ -201,7 +200,7 @@ class AlkoFrostDelay(AlkoDeviceEntity, NumberEntity):
         super().__init__(
             coordinator,
             device,
-            f"{device.thingName}_frost_delay",
+            "frost_delay",
             "Frost Delay",
         )
 

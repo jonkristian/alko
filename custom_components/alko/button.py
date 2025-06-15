@@ -1,10 +1,9 @@
 """Support for AL-KO button platform."""
 import logging
-from typing import Any
 
 from pyalko import Alko
-from pyalko.objects.device import AlkoDevice
 from pyalko.exceptions import AlkoException
+from pyalko.objects.device import AlkoDevice
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
@@ -56,7 +55,7 @@ class AlkoResetBladeLifeButton(AlkoDeviceEntity, ButtonEntity):
         super().__init__(
             coordinator,
             device,
-            f"{device.thingName}_reset_blade_life",
+            "reset_blade_life",
             "Reset Blade Life"
         )
 
@@ -79,8 +78,8 @@ class AlkoEdgeCuttingButton(AlkoDeviceEntity, ButtonEntity):
         super().__init__(
             coordinator,
             device,
-            f"{device.thingName}_edge_cutting",
-            "Start Edge Cutting"
+            "edge_cutting",
+            "Edge Cutting"
         )
 
     async def async_press(self) -> None:
