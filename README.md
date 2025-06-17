@@ -91,15 +91,6 @@ target:
     domain: lawn_mower
 ```
 
-### Device State Notification
-
-```yaml
-service: alko.show_device_state
-target:
-  entity:
-    domain: lawn_mower
-```
-
 # Installation
 
 ## Requesting API access
@@ -116,6 +107,17 @@ If you're using HACS you can add this repo as a custom repository and install, o
    - Enter the client ID and client secret you received from AL-KO
 5. Once the application credentials are set, enter your AL-KO username and password
 6. The integration will now set up your devices automatically
+
+## Troubleshooting
+If you're experiencing issues with the integration, you can use the device state notification service to get detailed information about your mower's current state. This will help with debugging and providing more information when reporting issues.
+
+To get the device state:
+1. Go to Developer Tools > Actions
+2. Search for "alko.show_device_state"
+3. Select your lawn mower entity
+4. Click "Call Service"
+
+This will send a notification to your Home Assistant instance with detailed information about your mower's current state.
 
 ## Contribute
 If you own a smart product from AL-KO and would like to contribute, please don't hesitate getting in touch.
