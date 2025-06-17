@@ -12,7 +12,8 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    PERCENTAGE
+    PERCENTAGE,
+    UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -36,27 +37,16 @@ async def async_setup_entry(
     for device in coordinator.data.devices:
         cls_list = []
         if device.thingState.state.reported is not None:
-            # Check if device supports operation state
             if hasattr(device.thingState.state.reported, "operationState"):
                 cls_list.append(AlkoOperationSensor)
-
-            # Check if device supports operation error
             if hasattr(device.thingState.state.reported, "operationError"):
                 cls_list.append(AlkoErrorSensor)
-
-            # Check if device supports blade remaining
             if hasattr(device.thingState.state.reported, "operationTimeBlade"):
                 cls_list.append(AlkoBladeSensor)
-
-            # Check if device supports battery level
             if hasattr(device.thingState.state.reported, "batteryLevel"):
                 cls_list.append(AlkoBatterySensor)
-
-            # Check if device supports next operation
             if hasattr(device.thingState.state.reported, "nextOperation"):
                 cls_list.append(AlkoNextOperationSensor)
-
-            # Check if device supports RSSI
             if hasattr(device.thingState.state.reported, "rssi"):
                 cls_list.append(AlkoRssiSensor)
 
@@ -173,6 +163,9 @@ class AlkoBladeSensor(AlkoSensor):
     """Defines an AL-KO Blade sensor."""
 
     _attr_icon = "mdi:fan"
+    _attr_native_unit_of_measurement = UnitOfTime.HOURS
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_name = "Remaining Blade Life"
 
     def __init__(
         self,
@@ -191,7 +184,7 @@ class AlkoBladeSensor(AlkoSensor):
             "blade_remaining",
             "Remaining Blade Life",
             None,
-            "h",
+            UnitOfTime.HOURS,
         )
 
         self._attr_extra_state_attributes["operation_time"] = self.device.thingState.state.reported.operationTimeBlade
@@ -250,35 +243,48 @@ class AlkoNextOperationSensor(AlkoDeviceEntity, SensorEntity):
         today = current_time.strftime("%A").lower()
         mowing_windows = self.device.thingState.state.reported.mowingWindows
         is_day_cancelled = self.device.thingState.state.reported.situationFlags.dayCancelled
-
-        # Find next operation time
         next_operation = None
         next_window = None
         days = ['monday', 'tuesday', 'wednesday',
                 'thursday', 'friday', 'saturday', 'sunday']
         today_index = days.index(today)
 
-        # Check today and next 6 days
-        for i in range(7):
-            day = days[(today_index + i) % 7]
-            # Skip today if day is cancelled
-            if i == 0 and is_day_cancelled:
-                continue
-            if hasattr(mowing_windows, day):
-                windows = getattr(mowing_windows, day)
-                for window_num in ['window_1', 'window_2']:
-                    if hasattr(windows, window_num):
-                        window = getattr(windows, window_num)
-                        if window.activityMode:
-                            window_time = current_time.replace(
-                                hour=window.startHour,
-                                minute=window.startMinute,
-                                second=0,
-                                microsecond=0
-                            ) + timedelta(days=i)
-                            if window_time > current_time and (next_operation is None or window_time < next_operation):
-                                next_operation = window_time
-                                next_window = window
+        # Check for manual mowing
+        if hasattr(self.device.thingState.state.reported, "manualMowing"):
+            manual_mowing = self.device.thingState.state.reported.manualMowing
+            if manual_mowing is not None and manual_mowing.activityMode:
+                manual_time = current_time.replace(
+                    hour=manual_mowing.startHour,
+                    minute=manual_mowing.startMinute,
+                    second=0,
+                    microsecond=0
+                )
+                if manual_time > current_time:
+                    next_operation = manual_time
+                    next_window = manual_mowing
+
+        # Check scheduled windows
+        if next_operation is None:
+            for i in range(7):
+                day = days[(today_index + i) % 7]
+                # Skip today if day is cancelled
+                if i == 0 and is_day_cancelled:
+                    continue
+                if hasattr(mowing_windows, day):
+                    windows = getattr(mowing_windows, day)
+                    for window_num in ['window_1', 'window_2']:
+                        if hasattr(windows, window_num):
+                            window = getattr(windows, window_num)
+                            if window.activityMode:
+                                window_time = current_time.replace(
+                                    hour=window.startHour,
+                                    minute=window.startMinute,
+                                    second=0,
+                                    microsecond=0
+                                ) + timedelta(days=i)
+                                if window_time > current_time and (next_operation is None or window_time < next_operation):
+                                    next_operation = window_time
+                                    next_window = window
 
         if next_operation:
             next_operation = dt_util.as_local(next_operation)
@@ -289,10 +295,8 @@ class AlkoNextOperationSensor(AlkoDeviceEntity, SensorEntity):
                 self._attr_extra_state_attributes["margin_mode"] = next_window.marginMode
                 self._attr_extra_state_attributes["narrow_passage"] = next_window.narrowPassageMode
 
-            # Return ISO 8601 formatted timestamp
             return next_operation.isoformat()
 
-        # Reset attributes if no next operation
         self._attr_extra_state_attributes.update({
             "duration": None,
             "narrow_passage": None,

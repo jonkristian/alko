@@ -18,11 +18,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import aiohttp_client, config_entry_oauth2_flow
 from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
     UpdateFailed,
 )
+from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import device_registry as dr
+from homeassistant.util.dt import now as dt_now
 
 from .api import (
     ConfigEntryAlkoClient,
@@ -31,7 +35,6 @@ from .api import (
 )
 
 from .const import DOMAIN
-from .services import async_handle_start_manual_mowing, async_handle_update_mowing_window
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -89,18 +92,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
-    # Register services
-    hass.services.async_register(
-        DOMAIN,
-        "alko_update_mowing_window",
-        async_handle_update_mowing_window,
-    )
-    hass.services.async_register(
-        DOMAIN,
-        "alko_start_manual_mowing",
-        async_handle_start_manual_mowing,
-    )
 
     return True
 

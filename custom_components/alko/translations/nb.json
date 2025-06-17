@@ -169,7 +169,7 @@
     }
   },
   "services": {
-    "alko_update_mowing_window": {
+    "update_mowing_window": {
       "name": "Oppdater klippevindu",
       "description": "Oppdater eller endre et klippevindu for en spesifikk dag.",
       "fields": {
@@ -207,13 +207,21 @@
         }
       }
     },
-    "alko_start_manual_mowing": {
+    "start_manual_mowing": {
       "name": "Start manuell klipping",
       "description": "Start en manuell klippeoperasjon med spesifiserte parametere.",
       "fields": {
         "target": {
           "name": "Gressklipper",
           "description": "Velg gressklipperen du vil starte manuell klipping for."
+        },
+        "start_hour": {
+          "name": "Starttime",
+          "description": "Time for å starte klipping (00-23)."
+        },
+        "start_minute": {
+          "name": "Startminutt",
+          "description": "Minutt for å starte klipping (00-59)."
         },
         "duration": {
           "name": "Varighet",
@@ -228,6 +236,14 @@
           "description": "Inngangspunktsnummer for klippeoperasjonen."
         }
       }
+    },
+    "stop_manual_mowing": {
+      "name": "Stopp manuell klipping",
+      "description": "Stopp den nåværende manuelle klippeoperasjonen."
+    },
+    "show_device_state": {
+      "name": "Vis enhetstilstand",
+      "description": "Vis den nåværende enhetstilstanden som et varsel."
     }
   }
 }

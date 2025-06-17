@@ -72,7 +72,20 @@ class AlkoMowingCalendar(AlkoDeviceEntity, CalendarEntity):
         """Return the next upcoming event."""
         if not self._events:
             return None
-        return self._events[0]
+
+        now = dt_util.now()
+
+        # First try to find a current event
+        for event in self._events:
+            if event.start <= now < event.end:
+                return event
+
+        # If no current event, return the next upcoming one
+        for event in self._events:
+            if event.start > now:
+                return event
+
+        return None
 
     async def async_get_events(
         self,
@@ -104,48 +117,86 @@ class AlkoMowingCalendar(AlkoDeviceEntity, CalendarEntity):
                 window_1 = getattr(day_windows, "window_1", None)
                 window_2 = getattr(day_windows, "window_2", None)
 
-                for window_name, window in [("window_1", window_1), ("window_2", window_2)]:
+                for window_name, window in [("Window 1", window_1), ("Window 2", window_2)]:
                     if window is not None:
-                        # Create event start time
-                        start_time = datetime.combine(
-                            current_date,
-                            datetime.min.time().replace(
-                                hour=getattr(window, "startHour", 0),
-                                minute=getattr(window, "startMinute", 0),
-                            ),
-                        )
-                        # Convert to local timezone
-                        start_time = dt_util.as_local(start_time)
+                        # Check if window is active
+                        activity_mode = getattr(window, "activityMode", False)
+                        is_window_active = activity_mode and not (
+                            current_date == today and is_day_cancelled)
 
-                        # Calculate end time based on duration (in minutes)
-                        end_time = start_time + \
-                            timedelta(minutes=getattr(window, "duration", 0))
-
-                        # Only add events that fall within the requested range
-                        if start_time <= end_date and end_time >= start_date:
-                            # Create a more detailed description
-                            activity_mode = getattr(
-                                window, "activityMode", False)
-                            # Consider day cancellation when determining if the window is actually active
-                            is_window_active = activity_mode and not (
-                                current_date == today and is_day_cancelled)
-                            description = (
-                                f"Status: {'Active' if is_window_active else 'Inactive'}\n"
-                                f"Margin Mode: {getattr(window, 'marginMode', False)}\n"
-                                f"Narrow Passage: {getattr(window, 'narrowPassageMode', False)}"
+                        # Only add active windows
+                        if is_window_active:
+                            # Create event start time
+                            start_time = datetime.combine(
+                                current_date,
+                                datetime.min.time().replace(
+                                    hour=getattr(window, "startHour", 0),
+                                    minute=getattr(window, "startMinute", 0),
+                                ),
                             )
+                            # Convert to local timezone
+                            start_time = dt_util.as_local(start_time)
 
-                            # Determine status symbol - use × for both inactive and paused
-                            status_symbol = "✓" if is_window_active else "×"
+                            # Calculate end time based on duration (in minutes)
+                            end_time = start_time + \
+                                timedelta(minutes=getattr(
+                                    window, "duration", 0))
 
-                            events.append(
-                                CalendarEvent(
-                                    summary=f"{self._device_model} {status_symbol}",
-                                    start=start_time,
-                                    end=end_time,
-                                    description=description,
+                            # Only add events that fall within the requested range
+                            if start_time <= end_date and end_time >= start_date:
+                                # Create a concise summary with mutually exclusive modes
+                                if getattr(window, 'marginMode', False):
+                                    summary = "Mowing Border & Area"
+                                elif getattr(window, 'narrowPassageMode', False):
+                                    summary = "Mowing Narrow Passage"
+                                else:
+                                    summary = "Mowing"
+
+                                events.append(
+                                    CalendarEvent(
+                                        summary=summary,
+                                        start=start_time,
+                                        end=end_time,
+                                    )
                                 )
+
+            # Add manual mowing event if it exists and it's today
+            if current_date == today and hasattr(self.device.thingState.state.reported, "manualMowing"):
+                manual_mowing = self.device.thingState.state.reported.manualMowing
+                if manual_mowing is not None and getattr(manual_mowing, "activityMode", False):
+                    # Create event start time
+                    start_time = datetime.combine(
+                        current_date,
+                        datetime.min.time().replace(
+                            hour=getattr(manual_mowing, "startHour", 0),
+                            minute=getattr(manual_mowing, "startMinute", 0),
+                        ),
+                    )
+                    # Convert to local timezone
+                    start_time = dt_util.as_local(start_time)
+
+                    # Calculate end time based on duration (in minutes)
+                    end_time = start_time + \
+                        timedelta(minutes=getattr(
+                            manual_mowing, "duration", 0))
+
+                    # Only add if it falls within the requested range
+                    if start_time <= end_date and end_time >= start_date:
+                        # Create a concise summary for manual mowing
+                        if getattr(manual_mowing, 'marginMode', False):
+                            summary = "Manual Mowing Border & Area"
+                        elif getattr(manual_mowing, 'narrowPassageMode', False):
+                            summary = "Manual Mowing Narrow Passage"
+                        else:
+                            summary = "Manual Mowing"
+
+                        events.append(
+                            CalendarEvent(
+                                summary=summary,
+                                start=start_time,
+                                end=end_time,
                             )
+                        )
 
             # Move to next day
             current_date += timedelta(days=1)

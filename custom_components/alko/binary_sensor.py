@@ -30,25 +30,18 @@ async def async_setup_entry(
     for device in coordinator.data.devices:
         cls_list = []
         if hasattr(device.thingState.state.reported, "situationFlags"):
-            # Check if device supports rain detection
             if hasattr(device.thingState.state.reported.situationFlags, "rainDetected"):
                 cls_list.append(AlkoRainDetectedSensor)
-            # Check if device supports frost detection
             if hasattr(device.thingState.state.reported.situationFlags, "frostDetected"):
                 cls_list.append(AlkoFrostDetectedSensor)
-            # Check if device supports charger contact status
             if hasattr(device.thingState.state.reported.situationFlags, "chargerContact"):
                 cls_list.append(AlkoChargerContactBinarySensor)
-            # Check if device supports day cancelled status
             if hasattr(device.thingState.state.reported.situationFlags, "dayCancelled"):
                 cls_list.append(AlkoDayCancelledBinarySensor)
-            # Check if device supports robot is active status
             if hasattr(device.thingState.state.reported.situationFlags, "robotIsActive"):
                 cls_list.append(AlkoRobotIsActiveBinarySensor)
-            # Check if device supports is connected status
             if hasattr(device.thingState.state.reported, "isConnected"):
                 cls_list.append(AlkoIsConnectedBinarySensor)
-            # Check if device supports user interaction status
             if hasattr(device.thingState.state.reported.situationFlags, "userInteraction"):
                 cls_list.append(AlkoUserInteractionBinarySensor)
 
@@ -231,10 +224,9 @@ class AlkoUserInteractionBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         """Return true if user interaction is required."""
-        # Get the reported state
         reported = self.device.thingState.state.reported
 
-        # Check if the device is locked (PIN required)
+        # Check if the device is locked
         if reported.operationSubState == "LOCKED_PIN":
             return True
 

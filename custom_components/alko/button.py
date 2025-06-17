@@ -3,7 +3,6 @@ import logging
 
 from pyalko import Alko
 from pyalko.exceptions import AlkoException
-from pyalko.objects.device import AlkoDevice
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
@@ -28,11 +27,8 @@ async def async_setup_entry(
     for device in coordinator.data.devices:
         cls_list = []
         if device.thingState.state.reported is not None:
-            # Add reset blade life button if supported
             if hasattr(device.thingState.state.reported, "resetBladesService"):
                 cls_list.append(AlkoResetBladeLifeButton)
-            if hasattr(device.thingState.state.reported, "manualMarginMowing"):
-                cls_list.append(AlkoEdgeCuttingButton)
 
         for cls in cls_list:
             entities.append(
@@ -65,30 +61,4 @@ class AlkoResetBladeLifeButton(AlkoDeviceEntity, ButtonEntity):
             await self._update_device(self.device, resetBladesService=True)
         except AlkoException as exception:
             _LOGGER.error("Failed to reset blade life: %s", exception)
-        await self.coordinator.async_refresh()
-
-
-class AlkoEdgeCuttingButton(AlkoDeviceEntity, ButtonEntity):
-    """Defines a button to start edge cutting."""
-
-    _attr_name = "Start Edge Cutting"
-    _attr_icon = "mdi:border-all"
-
-    def __init__(self, coordinator, device):
-        super().__init__(
-            coordinator,
-            device,
-            "edge_cutting",
-            "Edge Cutting"
-        )
-
-    async def async_press(self) -> None:
-        """Handle the button press."""
-        try:
-            # First set edge cutting mode
-            await self._update_device(self.device, manualMarginMowing=True)
-            # Then start the mower
-            await self._update_device(self.device, operationState="WORKING")
-        except AlkoException as exception:
-            _LOGGER.error("Failed to start edge cutting: %s", exception)
         await self.coordinator.async_refresh()

@@ -1,15 +1,10 @@
-alko_update_mowing_window:
+update_mowing_window:
   name: Update Mowing Window
   description: Update or modify a mowing window for a specific day.
+  target:
+    entity:
+      domain: lawn_mower
   fields:
-    target:
-      name: Target
-      description: The lawn mower entity to configure
-      required: true
-      selector:
-        target:
-          entity:
-            domain: lawn_mower
     day:
       name: Day
       description: Day of the week to modify
@@ -90,25 +85,37 @@ alko_update_mowing_window:
     entry_point:
       name: Entry Point
       description: Entry point number for the mowing operation
-      required: true
-      default: 0
+      required: false
       selector:
         number:
           min: 0
           mode: box
 
-alko_start_manual_mowing:
+start_manual_mowing:
   name: Start Manual Mowing
   description: Start a manual mowing operation with specified parameters.
+  target:
+    entity:
+      domain: lawn_mower
   fields:
-    target:
-      name: Target
-      description: The lawn mower entity to configure
+    start_hour:
+      name: Start Hour
+      description: Hour to start mowing (00-23)
       required: true
       selector:
-        target:
-          entity:
-            domain: lawn_mower
+        number:
+          min: 0
+          max: 23
+          mode: box
+    start_minute:
+      name: Start Minute
+      description: Minute to start mowing (00-59)
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 59
+          mode: box
     duration:
       name: Duration
       description: Duration in minutes (1-360)
@@ -138,8 +145,22 @@ alko_start_manual_mowing:
       name: Entry Point
       description: Entry point number for the mowing operation
       required: true
-      default: 0
+      default: 1
       selector:
         number:
           min: 0
           mode: box
+
+stop_manual_mowing:
+  name: Stop Manual Mowing
+  description: Stop the current manual mowing operation.
+  target:
+    entity:
+      domain: lawn_mower
+
+show_device_state:
+  name: Show Device State
+  description: Show the current device state as a notification.
+  target:
+    entity:
+      domain: lawn_mower

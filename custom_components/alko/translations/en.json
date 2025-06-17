@@ -169,7 +169,7 @@
     }
   },
   "services": {
-    "alko_update_mowing_window": {
+    "update_mowing_window": {
       "name": "Update Mowing Window",
       "description": "Update or modify a mowing window for a specific day.",
       "fields": {
@@ -207,7 +207,7 @@
         }
       }
     },
-    "alko_start_manual_mowing": {
+    "start_manual_mowing": {
       "name": "Start Manual Mowing",
       "description": "Start a manual mowing operation with specified parameters.",
       "fields": {

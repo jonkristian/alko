@@ -1,7 +1,9 @@
 """Support for AL-KO mower platform."""
 import logging
 from typing import Any
-from datetime import datetime
+import json
+
+import voluptuous as vol
 
 from pyalko import Alko
 from pyalko.exceptions import AlkoException
@@ -14,11 +16,12 @@ from homeassistant.components.lawn_mower import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.util import dt as dt_util
 
 from . import AlkoDeviceEntity
 from .const import DOMAIN
-from .sensor import AlkoOperationSensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,6 +42,43 @@ async def async_setup_entry(
             )
 
     async_add_entities(entities, True)
+
+    # Register services
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        "update_mowing_window",
+        {
+            vol.Required("day"): str,
+            vol.Required("window_number"): int,
+            vol.Required("start_hour"): int,
+            vol.Required("start_minute"): int,
+            vol.Required("duration"): int,
+            vol.Required("type"): str,
+            vol.Optional("entry_point"): int,
+        },
+        "async_update_mowing_window",
+    )
+    platform.async_register_entity_service(
+        "start_manual_mowing",
+        {
+            vol.Required("start_hour"): int,
+            vol.Required("start_minute"): int,
+            vol.Required("duration"): int,
+            vol.Required("type"): str,
+            vol.Required("entry_point"): int,
+        },
+        "async_start_manual_mowing",
+    )
+    platform.async_register_entity_service(
+        "stop_manual_mowing",
+        {},
+        "async_stop_manual_mowing",
+    )
+    platform.async_register_entity_service(
+        "show_device_state",
+        {},
+        "async_show_device_state",
+    )
 
 
 class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
@@ -119,7 +159,7 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
                 return
 
             # Make API call first
-            rtc = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+            rtc = dt_util.now().strftime("%Y-%m-%dT%H:%M:%S")
             await self._update_device(self.device, operationState="WORKING", rtc=rtc)
             await self.coordinator.async_refresh()
 
@@ -133,7 +173,7 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
         """Pause mowing."""
         try:
             # Make API call first
-            rtc = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+            rtc = dt_util.now().strftime("%Y-%m-%dT%H:%M:%S")
             await self._update_device(self.device, operationState="IDLE", rtc=rtc)
             await self.coordinator.async_refresh()
 
@@ -147,7 +187,7 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
         """Return to charging station."""
         try:
             # Make API call first
-            rtc = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+            rtc = dt_util.now().strftime("%Y-%m-%dT%H:%M:%S")
             await self._update_device(self.device, operationState="HOMING", rtc=rtc)
             await self.coordinator.async_refresh()
 
@@ -156,3 +196,96 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
             self.async_write_ha_state()
         except AlkoException as exception:
             _LOGGER.error("Failed to dock mower: %s", exception)
+
+    async def async_update_mowing_window(
+        self,
+        day: str,
+        window_number: int,
+        start_hour: int,
+        start_minute: int,
+        duration: int,
+        type: str,
+        entry_point: int | None = None,
+    ) -> None:
+        """Update mowing window."""
+        try:
+            window = f"window_{window_number}"
+            window_data = {
+                "activityMode": type != "deactivated",
+                "marginMode": type == "first_mow_border_then_area",
+                "narrowPassageMode": type == "narrow_passage",
+                "startHour": start_hour,
+                "startMinute": start_minute,
+                "duration": duration,
+            }
+
+            if entry_point is not None:
+                window_data["entryPoint"] = entry_point
+
+            window_update = {
+                day: {
+                    window: window_data
+                }
+            }
+
+            rtc = dt_util.now().strftime("%Y-%m-%dT%H:%M:%S")
+            await self._update_device(self.device, mowingWindows=window_update, rtc=rtc)
+            await self.coordinator.async_refresh()
+        except AlkoException as exception:
+            _LOGGER.error("Failed to update mowing window: %s", exception)
+
+    async def async_start_manual_mowing(
+        self,
+        start_hour: int,
+        start_minute: int,
+        duration: int,
+        type: str,
+        entry_point: int,
+    ) -> None:
+        """Start manual mowing."""
+        try:
+            manual_mowing = {
+                "activityMode": True,
+                "marginMode": type == "first_mow_border_then_area",
+                "narrowPassageMode": type == "narrow_passage",
+                "startHour": start_hour,
+                "startMinute": start_minute,
+                "duration": duration,
+                "entryPoint": entry_point,
+            }
+
+            rtc = dt_util.now().strftime("%Y-%m-%dT%H:%M:%S")
+            await self._update_device(self.device, manualMowing=manual_mowing, rtc=rtc)
+            await self.coordinator.async_refresh()
+        except AlkoException as exception:
+            _LOGGER.error("Failed to start manual mowing: %s", exception)
+
+    async def async_stop_manual_mowing(self) -> None:
+        """Stop manual mowing."""
+        try:
+            rtc = dt_util.now().strftime("%Y-%m-%dT%H:%M:%S")
+            await self._update_device(
+                self.device,
+                manualMowing={"activityMode": False},
+                operationState="HOMING",
+                rtc=rtc
+            )
+            await self.coordinator.async_refresh()
+        except AlkoException as exception:
+            _LOGGER.error("Failed to stop manual mowing: %s", exception)
+
+    async def async_show_device_state(self) -> None:
+        """Show the current device state as a notification."""
+        try:
+            state_data = self.device.thingState.state.reported.__dict__
+            await self.hass.services.async_call(
+                "persistent_notification",
+                "create",
+                {
+                    "title": "AL-KO Device State",
+                    "message": f"```json\n{json.dumps(state_data, indent=2)}\n```",
+                },
+            )
+            _LOGGER.info("Device state shown in notification")
+        except Exception as e:
+            _LOGGER.error("Failed to show device state: %s", e)
