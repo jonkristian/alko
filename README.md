@@ -41,8 +41,7 @@ This component allows you to integrate your AL-KO Robolinho mower in Home Assist
 - ⏸️ Pause for today
 
 ### Calendar
-- 📅 View mowing window schedules
-- 🔍 Details: Status, Margin Mode, Narrow Passage
+- 📅 Shows mowing events throughout a week.
 
 ### Device Information
 - 💾 Firmware version
@@ -52,10 +51,10 @@ This component allows you to integrate your AL-KO Robolinho mower in Home Assist
 
 ## Services
 
-### Mowing Windows
+### Update Mowing Windows
 
 ```yaml
-service: alko.alko_update_mowing_window
+service: alko.update_mowing_window
 target:
   entity:
     domain: lawn_mower
@@ -68,16 +67,37 @@ data:
   type: mow  # Type of mowing operation (mow, first_mow_border_then_area, narrow_passage, deactivated)
 ```
 
-### Manual Mowing
+### Start Manual Mowing
 
 ```yaml
-service: alko.alko_start_manual_mowing
+service: alko.start_manual_mowing
 target:
   entity:
     domain: lawn_mower
 data:
+  start_hour: 9  # Start hour (0-23)
+  start_minute: 0  # Start minute (0-59)
   duration: 120  # Duration in minutes (1-360)
   type: mow  # Type of mowing operation (mow, first_mow_border_then_area, narrow_passage)
+  entry_point: 1  # Entry point number for the mowing operation
+```
+
+### Stop Manual Mowing
+
+```yaml
+service: alko.stop_manual_mowing
+target:
+  entity:
+    domain: lawn_mower
+```
+
+### Device State Notification
+
+```yaml
+service: alko.show_device_state
+target:
+  entity:
+    domain: lawn_mower
 ```
 
 # Installation
