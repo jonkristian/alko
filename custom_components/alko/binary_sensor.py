@@ -198,8 +198,8 @@ class AlkoIsConnectedBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
         )
 
     @property
-    def state(self) -> bool:
-        """Return the state of the sensor."""
+    def is_on(self) -> bool:
+        """Return the state of the binary sensor."""
         return self.device.thingState.state.reported.isConnected
 
 
