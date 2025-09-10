@@ -6,225 +6,22 @@
             "authorize_url_timeout": "Timeout i at oprette login URL.",
             "missing_configuration": "Komponenten er ikke konfigureret. Venligst følg dokumentationen.",
             "no_url_available": "Ingen URL tilgængelig. For mere information omkring denne fejl, [kig i hjælp sektionen]({docs_url})",
-            "oauth_error": "Modtog forkert token data."
+            "oauth_error": "Modtog ukorrekt token data."
         },
         "create_entry": {
-            "default": "Login lykkedes"
+            "default": "Login success"
         },
         "step": {
             "user": {
                 "data": {
                     "client_id": "Client ID",
                     "client_secret": "Client Secret",
-                    "username": "Brugernavn",
+                    "username": "Username",
                     "password": "Password"
                 },
-                "title": "Tilslut til AL-KO"
+                "title": "Koble til AL-KO"
             }
         }
     },
     "title": "AL-KO"
-},
-  "entity": {
-    "sensor": {
-      "error": {
-        "name": "Driftsfejl",
-        "state": {
-          "999": "OK",
-          "1": "Tiltsensor aktiveret",
-          "2": "Løftesensor aktiveret",
-          "3": "Påkørselssensor defekt",
-          "4": "Knive blokeret",
-          "5": "Påkørselssensor activated",
-          "6": "Påkørselssensor connection",
-          "7": "Intet signal fra afgrænsningskabel",
-          "8": "Svagt signal fra afgrænsningskabel",
-          "9": "Fejl på afgrænsningssensor",
-          "10": "Robotklipper uden for område",
-          "11": "Robotklipper uden for område",
-          "19": "Ikke kalibreret",
-          "20": "Fejl i motorens strømforsyning",
-          "21": "Fejl i motorens strømforsyning",
-          "22": "Motorstrømafbrydelse",
-          "23": "Fejl i motorens strømforsyning",
-          "24": "Motorstrømfejl",
-          "25": "Fejl i motorens strømforsyning",
-          "26": "Fejl i motorens strømforsyning",
-          "27": "Fejl i motorens strømforsyning",
-          "28": "Fejl i motorens strømforsyning",
-          "29": "Fejl i motorens strømforsyning",
-          "30": "Fejl i motorens strømforsyning",
-          "31": "Fejl i motorens strømforsyning",
-          "32": "Fejl i motorens strømforsyning",
-          "33": "Motorstrømfejl",
-          "34": "Fejl i motorens strømforsyning",
-          "35": "Motorstrømfejl",
-          "36": "Motorstrømfejl",
-          "37": "Fejl i motorens strømforsyning",
-          "38": "Batteriet er afladet",
-          "39": "Fejl i venstre hjulmotor",
-          "40": "Fejl i venstre hjulmotor",
-          "41": "Fejl i venstre hjulmotor",
-          "42": "Fejl i venstre hjulmotor",
-          "43": "Fejl i venstre hjulmotor",
-          "44": "Fejl i venstre hjulmotor",
-          "45": "Overstrøm til venstre hjulmotor",
-          "46": "Overstrøm til venstre hjulmotor",
-          "47": "Overophedning af venstre hjulmotor",
-          "48": "Fejl i venstre hjulmotor",
-          "49": "Fejl i venstre hjulmotor",
-          "51": "Fejl i venstre hjulmotor",
-          "52": "Fejl i venstre hjulmotor",
-          "53": "Fejl i venstre hjulmotor",
-          "54": "Fejl i venstre hjulmotor",
-          "55": "Fejl i venstre hjulmotor",
-          "56": "Fejl i venstre hjulmotor",
-          "57": "Fejl i venstre hjulmotor",
-          "58": "Fejl i venstre hjulmotor",
-          "59": "Fejl i højre hjulmotor",
-          "60": "Fejl i højre hjulmotor",
-          "61": "Fejl i højre hjulmotor",
-          "62": "Fejl i højre hjulmotor",
-          "63": "Fejl i højre hjulmotor",
-          "64": "Fejl i højre hjulmotor",
-          "65": "Overstrøm fra højre hjulmotor",
-          "66": "Overstrøm fra højre hjulmotor",
-          "67": "Overophedning af højre hjulmotor",
-          "68": "Fejl i højre hjulmotor",
-          "69": "Fejl i højre hjulmotor",
-          "70": "Fejl i højre hjulmotor",
-          "71": "Fejl i højre hjulmotor",
-          "72": "Fejl i højre hjulmotor",
-          "73": "Fejl i højre hjulmotor",
-          "74": "Fejl i højre hjulmotor",
-          "75": "Fejl i højre hjulmotor",
-          "76": "Fejl i højre hjulmotor",
-          "77": "Fejl i højre hjulmotor",
-          "78": "Fejl i højre hjulmotor",
-          "79": "Fejl i knivmotor",
-          "80": "Fejl i knivmotor",
-          "81": "Fejl i knivmotor",
-          "82": "Fejl i knivmotor",
-          "83": "Fejl i knivmotor",
-          "84": "Fejl i knivmotor",
-          "85": "Overstrøm på knivmotoren",
-          "86": "Fejl i knivmotor",
-          "87": "Fejl i knivmotor",
-          "88": "Fejl i knivmotor",
-          "89": "Fejl i knivmotor",
-          "90": "Fejl i knivmotor",
-          "91": "Fejl i knivmotor",
-          "92": "Fejl i knivmotor",
-          "93": "Fejl i knivmotor",
-          "94": "Fejl i knivmotor",
-          "95": "Fejl i knivmotor",
-          "96": "Fejl i knivmotor",
-          "97": "Fejl i knivmotor",
-          "98": "Fejl i knivmotor",
-          "99": "Automatisk frigivelse er ikke mulig",
-          "100": "Kunne ikke frigøre plæneklipperen",
-          "101": "Bakning mislykkedes",
-          "102": "Forkert PIN",
-          "103": "Ingen kontakt til basestation",
-          "104": "Batteri overophedet",
-          "105": "Batteri overophedet",
-          "106": "Batteri overophedet",
-          "107": "Batteritemperaturen er for lav",
-          "108": "Batteritemperaturen er for lav",
-          "109": "Knivmotor overophedet",
-          "110": "Knivmotor overophedet",
-          "111": "Fejl i styringen af knivmotoren",
-          "112": "Fejl i venstre hjulmotor",
-          "113": "Fejl i højre hjulmotor",
-          "114": "Fejl i knivmotor",
-          "115": "Fejl i venstre hjulmotor",
-          "116": "Fejl i højre hjulmotor",
-          "117": "Fejl i knivmotor",
-          "118": "Grænsekabel begrænset",
-          "119": "Højre stødsensor aktiveret",
-          "120": "Venstre stødsensor aktiveret",
-          "125": "Frigørelse fejlet",
-          "126": "Venstre hjulmotor overophedet",
-          "127": "Venstre hjulmotor overophedet",
-          "128": "Plæneklipperen sidder fast",
-          "129": "Venstre hjulmotor er blokeret",
-          "130": "Højre hjulmotor er blokeret",
-          "132": "Kunne ikke sætte klippehøjde",
-          "133": "Knivmotor blokeret",
-          "134": "Plæneklipperen sidder fast",
-          "135": "Batteri er frakoblet"
-        }
-      }
-    }
-  },
-  "services": {
-    "update_mowing_window": {
-      "name": "Opdater klippetid",
-      "description": "Opdater er ændre klippetid for en bestemt dag.",
-      "fields": {
-        "target": {
-          "name": "Plæneklipper",
-          "description": "Vælg hvilken plæneklipper du ønsker at ændre klippetid for."
-        },
-        "day": {
-          "name": "Dag",
-          "description": "Ændre ugedag."
-        },
-        "window_number": {
-          "name": "klippetidsrum",
-          "description": "Hvilket klippetidsrum vil du ændre (1 eller 2)."
-        },
-        "start_hour": {
-          "name": "Starttime",
-          "description": "Hvilken time skal klipningen starte (00-23)."
-        },
-        "start_minute": {
-          "name": "Startminut",
-          "description": "Hvilken minut skal klipningen starte (00-59)."
-        },
-        "duration": {
-          "name": "Varighed",
-          "description": "Varighed i minutter (1-360)."
-        },
-        "type": {
-          "name": "Type",
-          "description": "Type af klipning."
-        },
-        "entry_point": {
-          "name": "Startpunkt",
-          "description": "Startpunkt for klipning."
-        }
-      }
-    },
-    "start_manual_mowing": {
-      "name": "Start manual klipning",
-      "description": "Start manual klipning med angivne indstillinger.",
-      "fields": {
-        "target": {
-          "name": "Plæneklipper",
-          "description": "Vælg plæneklipperen for at starte manuel klipning."
-        },
-        "duration": {
-          "name": "Varighed",
-          "description": "Varighed i minutter (1-360)."
-        },
-        "type": {
-          "name": "Type",
-          "description": "Type af klipning."
-        },
-        "entry_point": {
-          "name": "Startpunkt",
-          "description": "Startpunkt for klipning."
-        }
-      }
-    },
-    "stop_manual_mowing": {
-      "name": "Stop manuel klipning",
-      "description": "Stop den nuværende manuelle klipning."
-    },
-    "show_device_state": {
-      "name": "Vis enhedstilstand",
-      "description": "Vis den nuværende enhedstilstand."
-    }
-  }
 }
