@@ -48,6 +48,29 @@ PLATFORMS = [
     Platform.CALENDAR,
 ]
 
+# Base URL for AL-KO IoT API
+_ALKO_BASE_URL = "https://api.al-ko.com/v1/iot/things"
+
+
+class AlkoAllDevices(Alko):
+    """Extended AL-KO client that fetches ALL device categories, not just Robolinho.
+
+    The original pyalko library hard-codes thingCategory=ALKO-ROBOLINHO in the
+    API query, which excludes smart chargers, batteries, and other AL-KO devices.
+    This subclass removes that filter so all registered devices are returned.
+    """
+
+    async def get_devices(self) -> None:
+        """Get all connected AL-KO devices regardless of category."""
+        response = await self._client.get(
+            f"{_ALKO_BASE_URL}?pimInfo=true&thingState=true&accesses=true"
+        )
+        data = await response.json()
+        self._devices = [AlkoDevice(self._client, item) for item in data or []]
+        self._devices_dict: dict = {}
+        for device in self._devices:
+            self._devices_dict[device.thingName] = device
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up ALKO from a config entry."""
@@ -65,13 +88,32 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     client = ConfigEntryAlkoClient(session, oauth_session)
     client_id = implementation.client_id
-    alko = Alko(client, client_id)
+    alko = AlkoAllDevices(client, client_id)
 
     async def async_update_data() -> Alko:
         """Fetch data from Alko."""
         try:
             async with async_timeout.timeout(60):
                 await alko.get_devices()
+
+                # Log raw state for any non-mower device so we can add support
+                for device in alko.devices:
+                    reported_attrs = device.thingState.state.reported.attributes
+                    model = device.thingAttributes.thingModel
+                    thing_type = device.thingAttributes.thingType
+                    thing_name = device.thingAttributes.thingName
+                    if not reported_attrs.get("operationState"):
+                        _LOGGER.warning(
+                            "AL-KO non-mower device found — model=%s | type=%s | "
+                            "name=%s | reported_state=%s",
+                            model, thing_type, thing_name, reported_attrs,
+                        )
+                    else:
+                        _LOGGER.debug(
+                            "AL-KO mower device: model=%s | name=%s",
+                            model, thing_name,
+                        )
+
                 return alko
         except AlkoAuthenticationException as exception:
             raise ConfigEntryAuthFailed from exception

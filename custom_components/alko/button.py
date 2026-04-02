@@ -25,18 +25,9 @@ async def async_setup_entry(
     entities = []
 
     for device in coordinator.data.devices:
-        cls_list = []
-        if device.thingState.state.reported is not None:
-            if hasattr(device.thingState.state.reported, "resetBladesService"):
-                cls_list.append(AlkoResetBladeLifeButton)
-
-        for cls in cls_list:
-            entities.append(
-                cls(
-                    coordinator,
-                    device,
-                )
-            )
+        # Only add Reset Blade Life for devices that actually report this attribute
+        if "resetBladesService" in device.thingState.state.reported.attributes:
+            entities.append(AlkoResetBladeLifeButton(coordinator, device))
 
     async_add_entities(entities, True)
 
@@ -48,17 +39,11 @@ class AlkoResetBladeLifeButton(AlkoDeviceEntity, ButtonEntity):
     _attr_icon = "mdi:restart"
 
     def __init__(self, coordinator, device):
-        super().__init__(
-            coordinator,
-            device,
-            "reset_blade_life",
-            "Reset Blade Life"
-        )
+        super().__init__(coordinator, device, "reset_blade_life", "Reset Blade Life")
 
     async def async_press(self) -> None:
-        """Handle the button press."""
         try:
             await self._update_device(self.device, resetBladesService=True)
-        except AlkoException as exception:
-            _LOGGER.error("Failed to reset blade life: %s", exception)
+        except AlkoException as exc:
+            _LOGGER.error("Failed to reset blade life: %s", exc)
         await self.coordinator.async_refresh()
