@@ -19,6 +19,16 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 
+def _reported(device: AlkoDevice) -> dict:
+    """Return raw reported state attributes dict for a device."""
+    return device.thingState.state.reported.attributes
+
+
+def _situation_flags(device: AlkoDevice) -> dict:
+    """Return raw situationFlags dict for a device."""
+    return _reported(device).get("situationFlags", {})
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
@@ -28,226 +38,184 @@ async def async_setup_entry(
     entities = []
 
     for device in coordinator.data.devices:
-        cls_list = []
-        if hasattr(device.thingState.state.reported, "situationFlags"):
-            if hasattr(device.thingState.state.reported.situationFlags, "rainDetected"):
-                cls_list.append(AlkoRainDetectedSensor)
-            if hasattr(device.thingState.state.reported.situationFlags, "frostDetected"):
-                cls_list.append(AlkoFrostDetectedSensor)
-            if hasattr(device.thingState.state.reported.situationFlags, "chargerContact"):
-                cls_list.append(AlkoChargerContactBinarySensor)
-            if hasattr(device.thingState.state.reported.situationFlags, "dayCancelled"):
-                cls_list.append(AlkoDayCancelledBinarySensor)
-            if hasattr(device.thingState.state.reported.situationFlags, "robotIsActive"):
-                cls_list.append(AlkoRobotIsActiveBinarySensor)
-            if hasattr(device.thingState.state.reported, "isConnected"):
-                cls_list.append(AlkoIsConnectedBinarySensor)
-            if hasattr(device.thingState.state.reported.situationFlags, "userInteraction"):
-                cls_list.append(AlkoUserInteractionBinarySensor)
+        attrs = _reported(device)
+        if not attrs:
+            continue
 
-        for cls in cls_list:
-            entities.append(
-                cls(
-                    coordinator,
-                    device,
-                )
-            )
+        flags = _situation_flags(device)
+
+        # ── Universal: available for mowers and chargers ─────────────────────
+        if "isConnected" in attrs:
+            entities.append(AlkoIsConnectedBinarySensor(coordinator, device))
+
+        # ── Mower situationFlags sensors ─────────────────────────────────────
+        if "rainDetected" in flags:
+            entities.append(AlkoRainDetectedSensor(coordinator, device))
+        if "frostDetected" in flags:
+            entities.append(AlkoFrostDetectedSensor(coordinator, device))
+        if "chargerContact" in flags:
+            entities.append(AlkoChargerContactBinarySensor(coordinator, device))
+        if "dayCancelled" in flags:
+            entities.append(AlkoDayCancelledBinarySensor(coordinator, device))
+        if "robotIsActive" in flags:
+            entities.append(AlkoRobotIsActiveBinarySensor(coordinator, device))
+        if "userInteraction" in flags:
+            entities.append(AlkoUserInteractionBinarySensor(coordinator, device))
+
+        # ── Smart charger: per-slot battery sensors ───────────────────────────
+        if "charger" in attrs:
+            for slot in (1, 2):
+                if f"battery_{slot}" in attrs["charger"]:
+                    entities.append(AlkoChargerBatteryInserted(coordinator, device, slot))
+                    entities.append(AlkoChargerBatteryCharging(coordinator, device, slot))
 
     async_add_entities(entities, True)
 
 
-class AlkoRainDetectedSensor(AlkoDeviceEntity, BinarySensorEntity):
-    """Defines an AL-KO rain detected binary sensor."""
+# ════════════════════════════════════════════════════════════════════════════
+# Mower binary sensors (unchanged from original)
+# ════════════════════════════════════════════════════════════════════════════
 
+class AlkoRainDetectedSensor(AlkoDeviceEntity, BinarySensorEntity):
     _attr_device_class = BinarySensorDeviceClass.MOISTURE
     _attr_icon = "mdi:water"
 
-    def __init__(
-        self,
-        coordinator: DataUpdateCoordinator,
-        device: AlkoDevice,
-    ) -> None:
-        """Initialize AL-KO rain detected sensor."""
-        super().__init__(
-            coordinator,
-            device,
-            "rain_detected",
-            "Rain Detected",
-        )
+    def __init__(self, coordinator, device):
+        super().__init__(coordinator, device, "rain_detected", "Rain Detected")
 
     @property
-    def is_on(self) -> bool:
-        """Return true if rain is detected."""
+    def is_on(self):
         return self.device.thingState.state.reported.situationFlags.rainDetected
 
 
 class AlkoFrostDetectedSensor(AlkoDeviceEntity, BinarySensorEntity):
-    """Defines an AL-KO frost detected binary sensor."""
-
     _attr_device_class = BinarySensorDeviceClass.COLD
     _attr_icon = "mdi:snowflake"
 
-    def __init__(
-        self,
-        coordinator: DataUpdateCoordinator,
-        device: AlkoDevice,
-    ) -> None:
-        """Initialize AL-KO frost detected sensor."""
-        super().__init__(
-            coordinator,
-            device,
-            "frost_detected",
-            "Frost Detected",
-        )
+    def __init__(self, coordinator, device):
+        super().__init__(coordinator, device, "frost_detected", "Frost Detected")
 
     @property
-    def is_on(self) -> bool:
-        """Return true if frost is detected."""
+    def is_on(self):
         return self.device.thingState.state.reported.situationFlags.frostDetected
 
 
 class AlkoChargerContactBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
-    """Defines an AL-KO Charger Contact binary sensor."""
-
     _attr_icon = "mdi:power-plug"
     _attr_device_class = BinarySensorDeviceClass.PLUG
 
-    def __init__(
-        self,
-        coordinator: DataUpdateCoordinator,
-        device: AlkoDevice,
-    ) -> None:
-        """Initialize AL-KO binary sensor."""
-        super().__init__(
-            coordinator,
-            device,
-            "charger_contact",
-            "Charger Contact",
-        )
+    def __init__(self, coordinator, device):
+        super().__init__(coordinator, device, "charger_contact", "Charger Contact")
 
     @property
-    def is_on(self) -> bool:
-        """Return the state of the binary sensor."""
+    def is_on(self):
         return self.device.thingState.state.reported.situationFlags.chargerContact
 
 
 class AlkoDayCancelledBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
-    """Defines an AL-KO Day Cancelled binary sensor."""
-
     _attr_icon = "mdi:calendar-remove"
 
-    def __init__(
-        self,
-        coordinator: DataUpdateCoordinator,
-        device: AlkoDevice,
-    ) -> None:
-        """Initialize AL-KO binary sensor."""
-        super().__init__(
-            coordinator,
-            device,
-            "day_cancelled",
-            "Day Cancelled",
-        )
+    def __init__(self, coordinator, device):
+        super().__init__(coordinator, device, "day_cancelled", "Day Cancelled")
 
     @property
-    def is_on(self) -> bool:
-        """Return the state of the binary sensor."""
+    def is_on(self):
         return self.device.thingState.state.reported.situationFlags.dayCancelled
 
 
 class AlkoRobotIsActiveBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
-    """Defines an AL-KO Robot Is Active binary sensor."""
-
     _attr_icon = "mdi:robot-mower-outline"
 
-    def __init__(
-        self,
-        coordinator: DataUpdateCoordinator,
-        device: AlkoDevice,
-    ) -> None:
-        """Initialize AL-KO robot is active sensor."""
-        super().__init__(
-            coordinator,
-            device,
-            "is_active",
-            "Is Active",
-        )
+    def __init__(self, coordinator, device):
+        super().__init__(coordinator, device, "is_active", "Is Active")
 
     @property
-    def is_on(self) -> bool:
-        """Return true if robot is active."""
+    def is_on(self):
         return self.device.thingState.state.reported.situationFlags.robotIsActive
 
 
 class AlkoIsConnectedBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
-    """Defines an AL-KO Is Connected sensor."""
-
     _attr_icon = "mdi:signal"
 
-    def __init__(
-        self,
-        coordinator: DataUpdateCoordinator,
-        device: AlkoDevice,
-    ) -> None:
-        """Initialize AL-KO is connected binary sensor."""
-        super().__init__(
-            coordinator,
-            device,
-            "is_connected",
-            "Is Connected"
-        )
+    def __init__(self, coordinator, device):
+        super().__init__(coordinator, device, "is_connected", "Is Connected")
 
     @property
-    def is_on(self) -> bool:
-        """Return the state of the binary sensor."""
+    def is_on(self):
         return self.device.thingState.state.reported.isConnected
 
 
 class AlkoUserInteractionBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
-    """Defines an AL-KO User Interaction sensor."""
-
     _attr_icon = "mdi:hand-wave"
 
-    def __init__(
-        self,
-        coordinator: DataUpdateCoordinator,
-        device: AlkoDevice,
-    ) -> None:
-        """Initialize AL-KO user interaction binary sensor."""
-        super().__init__(
-            coordinator,
-            device,
-            "user_interaction",
-            "User Interaction"
-        )
+    def __init__(self, coordinator, device):
+        super().__init__(coordinator, device, "user_interaction", "User Interaction")
 
     @property
-    def is_on(self) -> bool:
-        """Return true if user interaction is required."""
+    def is_on(self):
         reported = self.device.thingState.state.reported
-
-        # Check if the device is locked
         if reported.operationSubState == "LOCKED_PIN":
             return True
-
-        # Check for any error code other than 999
         if reported.operationError.code != 999:
             return True
-
-        # Check for critical issues that require attention
         flags = reported.situationFlags
         if (
-            flags.batteryFailure or
-            flags.chargerFailure or
-            flags.bladeService or
-            flags.wheelMotorTemperatureHigh or
-            flags.stopAfterIssue or
+            flags.batteryFailure or flags.chargerFailure or flags.bladeService or
+            flags.wheelMotorTemperatureHigh or flags.stopAfterIssue or
             not flags.operationPermitted
         ):
             return True
-
-        # Check operation situation for critical states
         if reported.operationSituation == "OPERATION_NOT_PERMITTED_LOCKED":
             return True
-
         return False
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# Smart charger binary sensors
+# ════════════════════════════════════════════════════════════════════════════
+
+class _AlkoChargerBatteryBinaryBase(AlkoDeviceEntity, BinarySensorEntity):
+    """Base class for per-slot charger battery binary sensors."""
+
+    def __init__(self, coordinator, device, slot: int, key_suffix: str, name_suffix: str):
+        self._slot = slot
+        super().__init__(
+            coordinator, device,
+            f"charger_battery_{slot}_{key_suffix}",
+            f"Battery {slot} {name_suffix}",
+        )
+
+    def _slot_data(self) -> dict:
+        return (
+            _reported(self.device)
+            .get("charger", {})
+            .get(f"battery_{self._slot}", {})
+        )
+
+
+class AlkoChargerBatteryInserted(_AlkoChargerBatteryBinaryBase):
+    """Whether a battery is physically inserted in this charger slot."""
+
+    _attr_device_class = BinarySensorDeviceClass.PLUG
+    _attr_icon = "mdi:battery-outline"
+
+    def __init__(self, coordinator, device, slot):
+        super().__init__(coordinator, device, slot, "inserted", "Inserted")
+
+    @property
+    def is_on(self) -> bool:
+        return bool(self._slot_data().get("inserted"))
+
+
+class AlkoChargerBatteryCharging(_AlkoChargerBatteryBinaryBase):
+    """Whether the battery in this slot is currently charging."""
+
+    _attr_device_class = BinarySensorDeviceClass.BATTERY_CHARGING
+    _attr_icon = "mdi:battery-charging"
+
+    def __init__(self, coordinator, device, slot):
+        super().__init__(coordinator, device, slot, "charging", "Charging")
+
+    @property
+    def is_on(self) -> bool:
+        return bool(self._slot_data().get("charging"))
