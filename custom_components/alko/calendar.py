@@ -59,10 +59,11 @@ class AlkoMowingCalendar(AlkoDeviceEntity, CalendarEntity):
         device: AlkoDevice,
     ) -> None:
         """Initialize AL-KO mowing calendar."""
+        # Korrektur: thingName in den Key eingebaut, um Entity-ID-Kollisionen zu verhindern
         super().__init__(
             coordinator,
             device,
-            "mowing_calendar",
+            f"{device.thingName}_mowing_calendar",
             "Mowing Schedule",
         )
         self._events: list[CalendarEvent] = []
