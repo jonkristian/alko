@@ -113,7 +113,7 @@ class AlkoOperationSensor(AlkoSensor):
         super().__init__(
             coordinator,
             device,
-            "operation_state",
+            f"{device.thingName}_operation_state",
             "Operation State",
         )
 
@@ -146,7 +146,7 @@ class AlkoErrorSensor(AlkoSensor):
         super().__init__(
             coordinator,
             device,
-            "operation_error",
+            f"{device.thingName}_operation_error",
             "Operation Error",
         )
 
@@ -181,7 +181,7 @@ class AlkoBladeSensor(AlkoSensor):
         super().__init__(
             coordinator,
             device,
-            "blade_remaining",
+            f"{device.thingName}_blade_remaining",
             "Remaining Blade Life",
             None,
             UnitOfTime.HOURS,
@@ -195,7 +195,7 @@ class AlkoBladeSensor(AlkoSensor):
         return self.device.thingState.state.reported.remainingBladeLifetime
 
 
-class AlkoBatterySensor(AlkoDeviceEntity, SensorEntity):
+class AlkoBatterySensor(AlkoSensor):
     """Defines an AL-KO Battery sensor."""
 
     _attr_device_class = SensorDeviceClass.BATTERY
@@ -203,11 +203,12 @@ class AlkoBatterySensor(AlkoDeviceEntity, SensorEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_name = "Battery Level"
 
-    def __init__(self, coordinator, device):
+    def __init__(self, coordinator: DataUpdateCoordinator, device: AlkoDevice) -> None:
+        """Initialize AL-KO sensor."""
         super().__init__(
             coordinator,
             device,
-            "battery_level",
+            f"{device.thingName}_battery_level",
             "Battery Level",
         )
 
@@ -217,17 +218,18 @@ class AlkoBatterySensor(AlkoDeviceEntity, SensorEntity):
         return self.device.thingState.state.reported.batteryLevel
 
 
-class AlkoNextOperationSensor(AlkoDeviceEntity, SensorEntity):
+class AlkoNextOperationSensor(AlkoSensor):
     """Defines an AL-KO Next Operation sensor."""
 
     _attr_icon = "mdi:calendar-range"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
 
-    def __init__(self, coordinator, device):
+    def __init__(self, coordinator: DataUpdateCoordinator, device: AlkoDevice) -> None:
+        """Initialize AL-KO sensor."""
         super().__init__(
             coordinator,
             device,
-            "next_operation",
+            f"{device.thingName}_next_operation",
             "Next Operation"
         )
         self._attr_extra_state_attributes = {
@@ -305,7 +307,7 @@ class AlkoNextOperationSensor(AlkoDeviceEntity, SensorEntity):
         return "N/A"
 
 
-class AlkoRssiSensor(AlkoDeviceEntity, SensorEntity):
+class AlkoRssiSensor(AlkoSensor):
     """Defines an AL-KO RSSI sensor."""
 
     _attr_device_class = SensorDeviceClass.SIGNAL_STRENGTH
@@ -313,11 +315,12 @@ class AlkoRssiSensor(AlkoDeviceEntity, SensorEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_name = "RSSI"
 
-    def __init__(self, coordinator, device):
+    def __init__(self, coordinator: DataUpdateCoordinator, device: AlkoDevice) -> None:
+        """Initialize AL-KO sensor."""
         super().__init__(
             coordinator,
             device,
-            "rssi",
+            f"{device.thingName}_rssi",
             "RSSI"
         )
 
