@@ -1,5 +1,6 @@
 """Support for AL-KO number platform."""
 import logging
+from typing import Any
 
 from pyalko import Alko
 from pyalko.exceptions import AlkoException
@@ -14,7 +15,9 @@ from homeassistant.const import UnitOfTime, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.util import dt as dt_util
 
+# KORREKTUR: Fehlender Import für AlkoDeviceEntity hinzugefügt
 from . import AlkoDeviceEntity
 from .const import DOMAIN
 
@@ -32,16 +35,12 @@ async def async_setup_entry(
     for device in coordinator.data.devices:
         cls_list = []
         if device.thingState.state.reported is not None:
-            # Check if device supports rain sensitivity
             if hasattr(device.thingState.state.reported, "rainSensitivity"):
                 cls_list.append(AlkoRainSensitivity)
-            # Check if device supports rain delay
             if hasattr(device.thingState.state.reported, "rainDelay"):
                 cls_list.append(AlkoRainDelay)
-            # Check if device supports frost threshold
             if hasattr(device.thingState.state.reported, "frostThreshold"):
                 cls_list.append(AlkoFrostThreshold)
-            # Check if device supports frost delay
             if hasattr(device.thingState.state.reported, "frostDelay"):
                 cls_list.append(AlkoFrostDelay)
 
@@ -74,7 +73,7 @@ class AlkoRainSensitivity(AlkoDeviceEntity, NumberEntity):
         super().__init__(
             coordinator,
             device,
-            "rain_sensitivity",
+            f"{device.thingName}_rain_sensitivity",
             "Rain Sensitivity",
         )
 
@@ -86,11 +85,10 @@ class AlkoRainSensitivity(AlkoDeviceEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Set the value."""
         try:
-            # Make API call first
-            await self._update_device(self.device, rainSensitivity=int(value))
+            rtc = dt_util.now().strftime("%Y-%m-%dT%H:%M:%S")
+            await self._update_device(self.device, rainSensitivity=int(value), rtc=rtc)
             await self.coordinator.async_refresh()
 
-            # Update state immediately
             self._value = value
             self.async_write_ha_state()
         except AlkoException as exception:
@@ -102,7 +100,7 @@ class AlkoRainDelay(AlkoDeviceEntity, NumberEntity):
 
     _attr_icon = "mdi:timer-outline"
     _attr_native_min_value = 0
-    _attr_native_max_value = 240  # Assuming 4 hours max, adjust if needed
+    _attr_native_max_value = 240
     _attr_native_step = 1
     _attr_native_unit_of_measurement = UnitOfTime.MINUTES
     _attr_mode = NumberMode.BOX
@@ -116,7 +114,7 @@ class AlkoRainDelay(AlkoDeviceEntity, NumberEntity):
         super().__init__(
             coordinator,
             device,
-            "rain_delay",
+            f"{device.thingName}_rain_delay",
             "Rain Delay",
         )
 
@@ -128,11 +126,10 @@ class AlkoRainDelay(AlkoDeviceEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Set the value."""
         try:
-            # Make API call first
-            await self._update_device(self.device, rainDelay=int(value))
+            rtc = dt_util.now().strftime("%Y-%m-%dT%H:%M:%S")
+            await self._update_device(self.device, rainDelay=int(value), rtc=rtc)
             await self.coordinator.async_refresh()
 
-            # Update state immediately
             self._value = value
             self.async_write_ha_state()
         except AlkoException as exception:
@@ -142,9 +139,9 @@ class AlkoRainDelay(AlkoDeviceEntity, NumberEntity):
 class AlkoFrostThreshold(AlkoDeviceEntity, NumberEntity):
     """Defines an AL-KO frost threshold number."""
 
-    _attr_icon = "mdi:snowflake-thermometer"
-    _attr_native_min_value = -10  # Assuming minimum temperature, adjust if needed
-    _attr_native_max_value = 10   # Assuming maximum temperature, adjust if needed
+    _attr_icon = "mdi:thermometer-snowflake"
+    _attr_native_min_value = -10
+    _attr_native_max_value = 10
     _attr_native_step = 1
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_mode = NumberMode.BOX
@@ -158,7 +155,7 @@ class AlkoFrostThreshold(AlkoDeviceEntity, NumberEntity):
         super().__init__(
             coordinator,
             device,
-            "frost_threshold",
+            f"{device.thingName}_frost_threshold",
             "Frost Threshold",
         )
 
@@ -170,11 +167,10 @@ class AlkoFrostThreshold(AlkoDeviceEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Set the value."""
         try:
-            # Make API call first
-            await self._update_device(self.device, frostThreshold=int(value))
+            rtc = dt_util.now().strftime("%Y-%m-%dT%H:%M:%S")
+            await self._update_device(self.device, frostThreshold=int(value), rtc=rtc)
             await self.coordinator.async_refresh()
 
-            # Update state immediately
             self._value = value
             self.async_write_ha_state()
         except AlkoException as exception:
@@ -184,9 +180,9 @@ class AlkoFrostThreshold(AlkoDeviceEntity, NumberEntity):
 class AlkoFrostDelay(AlkoDeviceEntity, NumberEntity):
     """Defines an AL-KO frost delay number."""
 
-    _attr_icon = "mdi:timer"
+    _attr_icon = "mdi:timer-snowflake"
     _attr_native_min_value = 0
-    _attr_native_max_value = 240  # Assuming 4 hours max, adjust if needed
+    _attr_native_max_value = 240
     _attr_native_step = 1
     _attr_native_unit_of_measurement = UnitOfTime.MINUTES
     _attr_mode = NumberMode.BOX
@@ -200,7 +196,7 @@ class AlkoFrostDelay(AlkoDeviceEntity, NumberEntity):
         super().__init__(
             coordinator,
             device,
-            "frost_delay",
+            f"{device.thingName}_frost_delay",
             "Frost Delay",
         )
 
@@ -212,11 +208,10 @@ class AlkoFrostDelay(AlkoDeviceEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Set the value."""
         try:
-            # Make API call first
-            await self._update_device(self.device, frostDelay=int(value))
+            rtc = dt_util.now().strftime("%Y-%m-%dT%H:%M:%S")
+            await self._update_device(self.device, frostDelay=int(value), rtc=rtc)
             await self.coordinator.async_refresh()
 
-            # Update state immediately
             self._value = value
             self.async_write_ha_state()
         except AlkoException as exception:
