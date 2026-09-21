@@ -100,7 +100,7 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
         super().__init__(
             coordinator,
             device,
-            "mower",
+            f"{device.thingName}_mower",
             "Mower",
         )
         self._state = self._get_state_from_device()
@@ -158,7 +158,7 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
                 _LOGGER.error("Cannot start mower: Mower is locked")
                 return
 
-            # Make API call first
+            # Make API call first with RTC timestamp
             rtc = dt_util.now().strftime("%Y-%m-%dT%H:%M:%S")
             await self._update_device(self.device, operationState="WORKING", rtc=rtc)
             await self.coordinator.async_refresh()
@@ -172,7 +172,7 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
     async def async_pause(self) -> None:
         """Pause mowing."""
         try:
-            # Make API call first
+            # Make API call first with RTC timestamp
             rtc = dt_util.now().strftime("%Y-%m-%dT%H:%M:%S")
             await self._update_device(self.device, operationState="IDLE", rtc=rtc)
             await self.coordinator.async_refresh()
@@ -186,7 +186,7 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
     async def async_dock(self) -> None:
         """Return to charging station."""
         try:
-            # Make API call first
+            # Make API call first with RTC timestamp
             rtc = dt_util.now().strftime("%Y-%m-%dT%H:%M:%S")
             await self._update_device(self.device, operationState="HOMING", rtc=rtc)
             await self.coordinator.async_refresh()
@@ -288,4 +288,4 @@ class AlkoMower(AlkoDeviceEntity, LawnMowerEntity):
             )
             _LOGGER.info("Device state shown in notification")
         except Exception as e:
-            _LOGGER.error("Failed to show device state: %s", e)
+          _LOGGER.error("Failed to show device state: %s", e)
