@@ -18,15 +18,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import aiohttp_client, config_entry_oauth2_flow
 from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
     UpdateFailed,
 )
-from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers import device_registry as dr
-from homeassistant.util.dt import now as dt_now
 
 from .api import (
     ConfigEntryAlkoClient,
@@ -83,11 +79,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER,
         name="alko_coordinator",
         update_method=async_update_data,
-        # Polling interval. Will only be polled if there are subscribers.
         update_interval=timedelta(seconds=60),
     )
 
-    # Fetch initial data so we have data when entities subscribe
     await coordinator.async_config_entry_first_refresh()
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
@@ -127,23 +121,31 @@ class AlkoEntity(CoordinatorEntity[DataUpdateCoordinator[Alko]]):
         self._serial_number = device.thingAttributes.serialNumber
         self._update_device = coordinator.data.update_device
 
-    def _normalize_model(self, model: str) -> str:
-        """Normalize the device model for use in entity IDs."""
-        # Convert to lowercase and replace spaces with underscores
-        normalized = model.lower().replace(" ", "_")
-        # Remove any special characters except underscores
+        # NEU: user_assigned_name auslesen. Falls pyalko es anders benennt, 
+        # nutzen wir getattr() um Fehler zu vermeiden, falls das Attribut fehlt.
+        self._user_assigned_name = getattr(device.thingAttributes, "userAssignedName", None)
+        if not self._user_assigned_name:
+            self._user_assigned_name = getattr(device.thingAttributes, "name", None)
+
+    def _normalize_string(self, text: str) -> str:
+        """Normalize strings for use in entity IDs."""
+        normalized = text.lower().replace(" ", "_")
         normalized = "".join(c for c in normalized if c.isalnum() or c == "_")
         return normalized
 
     @property
     def unique_id(self) -> str:
         """Return the unique ID for this entity."""
-        return f"{self._normalize_model(self._device_model)}_{self._key}"
+        # WICHTIG: Bleibt unverändert auf Basis von thingName, damit IDs stabil bleiben!
+        return f"{self._normalize_string(self._device_name)}_{self._key}"
 
     @property
     def name(self) -> str:
         """Return the name of the entity."""
-        return f"{self._device_model} {self._name}"
+        # NEU: Wenn ein benutzerdefinierter Name existiert, nutze diesen. 
+        # Ansonsten nimm wie vorher das Standard-Modell.
+        display_name = self._user_assigned_name if self._user_assigned_name else self._device_model
+        return f"{display_name} {self._name}"
 
     @property
     def device(self) -> AlkoDevice:
@@ -157,11 +159,14 @@ class AlkoDeviceEntity(AlkoEntity):
     @property
     def device_info(self) -> DeviceInfo:
         """Return device information about this AL-KO instance."""
+        # NEU: Auch das Hauptgerät im Dashboard nach dem User-Namen benennen
+        display_device_name = self._user_assigned_name if self._user_assigned_name else self._device_name
+        
         return {
             "identifiers": {(DOMAIN, self._device_name)},
             "manufacturer": "AL-KO",
             "model": self._device_model,
-            "name": self._device_model,
+            "name": display_device_name,
             "sw_version": self._firmware_main,
             "hw_version": self._hardware_main,
             "serial_number": self._serial_number
