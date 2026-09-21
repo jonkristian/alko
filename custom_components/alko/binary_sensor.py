@@ -13,6 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
+# KORREKTUR: Fehlender Import für AlkoDeviceEntity hinzugefügt
 from . import AlkoDeviceEntity
 from .const import DOMAIN
 
@@ -29,21 +30,29 @@ async def async_setup_entry(
 
     for device in coordinator.data.devices:
         cls_list = []
-        if hasattr(device.thingState.state.reported, "situationFlags"):
-            if hasattr(device.thingState.state.reported.situationFlags, "rainDetected"):
-                cls_list.append(AlkoRainDetectedSensor)
-            if hasattr(device.thingState.state.reported.situationFlags, "frostDetected"):
-                cls_list.append(AlkoFrostDetectedSensor)
-            if hasattr(device.thingState.state.reported.situationFlags, "chargerContact"):
-                cls_list.append(AlkoChargerContactBinarySensor)
-            if hasattr(device.thingState.state.reported.situationFlags, "dayCancelled"):
-                cls_list.append(AlkoDayCancelledBinarySensor)
-            if hasattr(device.thingState.state.reported.situationFlags, "robotIsActive"):
-                cls_list.append(AlkoRobotIsActiveBinarySensor)
+        if device.thingState.state.reported is not None:
+            # Sensoren innerhalb von situationFlags
+            if hasattr(device.thingState.state.reported, "situationFlags") and device.thingState.state.reported.situationFlags is not None:
+                if hasattr(device.thingState.state.reported.situationFlags, "rainDetected"):
+                    cls_list.append(AlkoRainDetectedSensor)
+                if hasattr(device.thingState.state.reported.situationFlags, "rainAllowsMowing"):
+                    cls_list.append(AlkoRainAllowsMowingSensor)
+                if hasattr(device.thingState.state.reported.situationFlags, "frostDetected"):
+                    cls_list.append(AlkoFrostDetectedSensor)
+                if hasattr(device.thingState.state.reported.situationFlags, "frostAllowsMowing"):
+                    cls_list.append(AlkoFrostAllowsMowingSensor)
+                if hasattr(device.thingState.state.reported.situationFlags, "chargerContact"):
+                    cls_list.append(AlkoChargerContactBinarySensor)
+                if hasattr(device.thingState.state.reported.situationFlags, "dayCancelled"):
+                    cls_list.append(AlkoDayCancelledBinarySensor)
+                if hasattr(device.thingState.state.reported.situationFlags, "robotIsActive"):
+                    cls_list.append(AlkoRobotIsActiveBinarySensor)
+                if hasattr(device.thingState.state.reported.situationFlags, "userInteraction"):
+                    cls_list.append(AlkoUserInteractionBinarySensor)
+            
+            # Unabhängige Sensoren direkt auf der Root-Ebene
             if hasattr(device.thingState.state.reported, "isConnected"):
                 cls_list.append(AlkoIsConnectedBinarySensor)
-            if hasattr(device.thingState.state.reported.situationFlags, "userInteraction"):
-                cls_list.append(AlkoUserInteractionBinarySensor)
 
         for cls in cls_list:
             entities.append(
@@ -71,7 +80,7 @@ class AlkoRainDetectedSensor(AlkoDeviceEntity, BinarySensorEntity):
         super().__init__(
             coordinator,
             device,
-            "rain_detected",
+            f"{device.thingName}_rain_detected",
             "Rain Detected",
         )
 
@@ -79,6 +88,30 @@ class AlkoRainDetectedSensor(AlkoDeviceEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Return true if rain is detected."""
         return self.device.thingState.state.reported.situationFlags.rainDetected
+
+
+class AlkoRainAllowsMowingSensor(AlkoDeviceEntity, BinarySensorEntity):
+    """Defines an AL-KO rain allows mowing binary sensor."""
+
+    _attr_icon = "mdi:robot-mower"
+
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator,
+        device: AlkoDevice,
+    ) -> None:
+        """Initialize AL-KO rain allows mowing sensor."""
+        super().__init__(
+            coordinator,
+            device,
+            f"{device.thingName}_rain_allows_mowing",
+            "Mowing Allowed (Rain)",
+        )
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if mowing is allowed despite rain."""
+        return self.device.thingState.state.reported.situationFlags.rainAllowsMowing
 
 
 class AlkoFrostDetectedSensor(AlkoDeviceEntity, BinarySensorEntity):
@@ -96,7 +129,7 @@ class AlkoFrostDetectedSensor(AlkoDeviceEntity, BinarySensorEntity):
         super().__init__(
             coordinator,
             device,
-            "frost_detected",
+            f"{device.thingName}_frost_detected",
             "Frost Detected",
         )
 
@@ -104,6 +137,30 @@ class AlkoFrostDetectedSensor(AlkoDeviceEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Return true if frost is detected."""
         return self.device.thingState.state.reported.situationFlags.frostDetected
+
+
+class AlkoFrostAllowsMowingSensor(AlkoDeviceEntity, BinarySensorEntity):
+    """Defines an AL-KO frost allows mowing binary sensor."""
+
+    _attr_icon = "mdi:robot-mower"
+
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator,
+        device: AlkoDevice,
+    ) -> None:
+        """Initialize AL-KO frost allows mowing sensor."""
+        super().__init__(
+            coordinator,
+            device,
+            f"{device.thingName}_frost_allows_mowing",
+            "Mowing Allowed (Frost)",
+        )
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if mowing is allowed despite frost."""
+        return self.device.thingState.state.reported.situationFlags.frostAllowsMowing
 
 
 class AlkoChargerContactBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
@@ -121,7 +178,7 @@ class AlkoChargerContactBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
         super().__init__(
             coordinator,
             device,
-            "charger_contact",
+            f"{device.thingName}_charger_contact",
             "Charger Contact",
         )
 
@@ -145,7 +202,7 @@ class AlkoDayCancelledBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
         super().__init__(
             coordinator,
             device,
-            "day_cancelled",
+            f"{device.thingName}_day_cancelled",
             "Day Cancelled",
         )
 
@@ -169,7 +226,7 @@ class AlkoRobotIsActiveBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
         super().__init__(
             coordinator,
             device,
-            "is_active",
+            f"{device.thingName}_is_active",
             "Is Active",
         )
 
@@ -193,7 +250,7 @@ class AlkoIsConnectedBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
         super().__init__(
             coordinator,
             device,
-            "is_connected",
+            f"{device.thingName}_is_connected",
             "Is Connected"
         )
 
@@ -217,7 +274,7 @@ class AlkoUserInteractionBinarySensor(AlkoDeviceEntity, BinarySensorEntity):
         super().__init__(
             coordinator,
             device,
-            "user_interaction",
+            f"{device.thingName}_user_interaction",
             "User Interaction"
         )
 
