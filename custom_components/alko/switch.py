@@ -37,7 +37,11 @@ async def async_setup_entry(
                 cls_list.append(AlkoRainSensorSwitch)
             if hasattr(device.thingState.state.reported, "frostSensor"):
                 cls_list.append(AlkoFrostSensorSwitch)
-            if hasattr(device.thingState.state.reported.situationFlags, "dayCancelled"):
+            
+            # Sichere Prüfung, ob situationFlags existiert und dayCancelled hat
+            if (hasattr(device.thingState.state.reported, "situationFlags") and 
+                device.thingState.state.reported.situationFlags is not None and 
+                hasattr(device.thingState.state.reported.situationFlags, "dayCancelled")):
                 cls_list.append(AlkoCancelTodaySwitch)
 
         for cls in cls_list:
@@ -65,7 +69,7 @@ class AlkoEcoModeSwitch(AlkoDeviceEntity, SwitchEntity):
         super().__init__(
             coordinator,
             device,
-            "eco_mode",
+            f"{device.thingName}_eco_mode",
             "Eco Mode",
         )
         self._state = self.device.thingState.state.reported.ecoMode
@@ -117,7 +121,7 @@ class AlkoRainSensorSwitch(AlkoDeviceEntity, SwitchEntity):
         super().__init__(
             coordinator,
             device,
-            "rain_sensor",
+            f"{device.thingName}_rain_sensor",
             "Rain Sensor",
         )
         self._state = self.device.thingState.state.reported.rainSensor
@@ -169,7 +173,7 @@ class AlkoFrostSensorSwitch(AlkoDeviceEntity, SwitchEntity):
         super().__init__(
             coordinator,
             device,
-            "frost_sensor",
+            f"{device.thingName}_frost_sensor",
             "Frost Sensor",
         )
         self._state = self.device.thingState.state.reported.frostSensor
@@ -222,7 +226,7 @@ class AlkoCancelTodaySwitch(AlkoDeviceEntity, SwitchEntity):
         super().__init__(
             coordinator,
             device,
-            "cancel_today",
+            f"{device.thingName}_cancel_today",
             "Paused for Today"
         )
         self._state = self.device.thingState.state.reported.situationFlags.dayCancelled
