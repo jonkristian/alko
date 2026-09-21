@@ -2,6 +2,7 @@
 import logging
 
 from pyalko import Alko
+from pyalko.objects.device import AlkoDevice
 from pyalko.exceptions import AlkoException
 
 from homeassistant.components.button import ButtonEntity
@@ -9,7 +10,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.util import dt as dt_util
 
+# KORREKTUR: Fehlender Import für AlkoDeviceEntity hinzugefügt
 from . import AlkoDeviceEntity
 from .const import DOMAIN
 
@@ -25,18 +28,12 @@ async def async_setup_entry(
     entities = []
 
     for device in coordinator.data.devices:
-        cls_list = []
         if device.thingState.state.reported is not None:
+            # Only add if device supports blade life reset
             if hasattr(device.thingState.state.reported, "resetBladesService"):
-                cls_list.append(AlkoResetBladeLifeButton)
-
-        for cls in cls_list:
-            entities.append(
-                cls(
-                    coordinator,
-                    device,
+                entities.append(
+                    AlkoResetBladeLifeButton(coordinator, device)
                 )
-            )
 
     async_add_entities(entities, True)
 
@@ -44,21 +41,23 @@ async def async_setup_entry(
 class AlkoResetBladeLifeButton(AlkoDeviceEntity, ButtonEntity):
     """Defines a button to reset blade life."""
 
-    _attr_name = "Reset Blade Life"
     _attr_icon = "mdi:restart"
+    _attr_name = "Reset Blade Life"
 
-    def __init__(self, coordinator, device):
+    def __init__(self, coordinator: DataUpdateCoordinator, device: AlkoDevice) -> None:
+        """Initialize AL-KO button."""
         super().__init__(
             coordinator,
             device,
-            "reset_blade_life",
+            f"{device.thingName}_reset_blade_life",
             "Reset Blade Life"
         )
 
     async def async_press(self) -> None:
         """Handle the button press."""
         try:
-            await self._update_device(self.device, resetBladesService=True)
+            rtc = dt_util.now().strftime("%Y-%m-%dT%H:%M:%S")
+            await self._update_device(self.device, resetBladesService=True, rtc=rtc)
         except AlkoException as exception:
             _LOGGER.error("Failed to reset blade life: %s", exception)
         await self.coordinator.async_refresh()
