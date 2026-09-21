@@ -33,10 +33,10 @@ update_mowing_window:
       required: true
       default: 1
       selector:
-        select:
-          options:
-            - 1
-            - 2
+        number:
+          min: 1
+          max: 2
+          mode: box
     start_hour:
       name: Start Hour
       description: Hour to start mowing (00-23)
@@ -89,6 +89,7 @@ update_mowing_window:
       selector:
         number:
           min: 0
+          max: 9
           mode: box
 
 start_manual_mowing:
@@ -149,6 +150,7 @@ start_manual_mowing:
       selector:
         number:
           min: 0
+          max: 9
           mode: box
 
 stop_manual_mowing:
